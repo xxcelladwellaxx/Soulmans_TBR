@@ -1,0 +1,481 @@
+{
+  "name": "BOMBAY!",
+  "id": "bombay-preset-v1",
+  "updatedAt": 1713200000000,
+  "rules": {
+    "type": "AMERICAN",
+    "minBet": 1,
+    "maxBet": 10000,
+    "maxInsideBet": 500,
+    "maxDozenColumn": 500,
+    "maxEvenMoney": 1000
+  },
+  "settings": {
+    "startingBankroll": 1200,
+    "numberOfSimulations": 100,
+    "spinsPerSimulation": 500
+  },
+  "sessionRules": {
+    "stopLossFloor": 850,
+    "goalTarget": 1500,
+    "smartPause": {
+      "enabled": true,
+      "triggerType": "CONSECUTIVE_ALL_LANE_LOSS",
+      "triggerCount": 2,
+      "pauseSpins": 2,
+      "pauseScope": ["L-D1", "L-D2", "L-D3"],
+      "continueDuring": ["L-SNIPE", "L-HEDGE"]
+    },
+    "profitLocks": [
+      {
+        "level": 1,
+        "bankrollThreshold": 1350,
+        "action": "DISABLE_LANES",
+        "targetLanes": ["L-SNIPE"],
+        "description": "Stop snipes at $1350"
+      },
+      {
+        "level": 2,
+        "bankrollThreshold": 1425,
+        "action": "FLATTEN_LANES",
+        "targetLanes": ["L-D1", "L-D2", "L-D3"],
+        "flatAmount": 2,
+        "disableProgression": true,
+        "description": "Flatten all dozens to $2, no progression at $1425"
+      },
+      {
+        "level": 3,
+        "bankrollThreshold": 1475,
+        "action": "DISABLE_ALL_EXCEPT",
+        "keepLanes": ["L-HEDGE"],
+        "description": "Zero hedge only at $1475"
+      },
+      {
+        "level": 4,
+        "bankrollThreshold": 1500,
+        "action": "WALK",
+        "description": "Session over — walk at $1500"
+      }
+    ]
+  },
+  "lanes": [
+    {
+      "id": "L-D1",
+      "name": "D1 Dozens",
+      "color": "#ef4444",
+      "enabled": true,
+      "laneRole": "PRIMARY_CANDIDATE",
+      "multiplier": 1,
+      "progressionIndex": 0,
+      "rotatingIndex": 0,
+      "rotatingUnits": 1,
+      "sessionProfit": 0,
+      "chainIndex": 0,
+      "isTriggered": false,
+      "stipWins": 0,
+      "stipLosses": 0,
+      "stipProfit": 0,
+      "stipSpins": 0,
+      "eliminatedBetIds": [],
+      "bets": [
+        {
+          "id": "B-D1",
+          "amount": 5,
+          "placement": {
+            "type": "DOZEN_1ST",
+            "numbers": [1,2,3,4,5,6,7,8,9,10,11,12],
+            "displayName": "1st 12"
+          }
+        }
+      ],
+      "triggerBets": [
+        {
+          "id": "T-D1-PIVOT",
+          "rule": "ABSENCE",
+          "threshold": 4,
+          "consecutive": true,
+          "active": true,
+          "watchPlacements": [
+            {
+              "type": "DOZEN_1ST",
+              "numbers": [1,2,3,4,5,6,7,8,9,10,11,12],
+              "displayName": "1st 12"
+            }
+          ],
+          "betPlacements": [],
+          "onWinAction": "RESET",
+          "onWinValue": 1,
+          "onLossAction": "NEXT_CHAIN_STEP",
+          "onLossValue": 1
+        }
+      ],
+      "config": {
+        "strategyMode": "CHAIN",
+        "baseUnit": 5,
+        "onWinAction": "RESTART_CHAIN",
+        "onWinValue": 1,
+        "onLossAction": "NEXT_CHAIN_STEP",
+        "onLossValue": 1,
+        "onWinStipType": "NONE",
+        "onWinStipValue": 0,
+        "onLossStipType": "NONE",
+        "onLossStipValue": 0,
+        "resetOnSessionProfit": 300,
+        "useResetOnSessionProfit": true,
+        "secondaryFlatAmount": 5,
+        "sequence": "",
+        "onWinUnits": 0,
+        "onLossUnits": 0,
+        "minUnits": 1,
+        "rotateOnWin": false,
+        "rotateOnLoss": false,
+        "chainSteps": [
+          {"bets": [{"id": "CS-D1-1", "amount": 5, "placement": {"type": "DOZEN_1ST", "numbers": [1,2,3,4,5,6,7,8,9,10,11,12], "displayName": "1st 12"}}]},
+          {"bets": [{"id": "CS-D1-2", "amount": 5, "placement": {"type": "DOZEN_1ST", "numbers": [1,2,3,4,5,6,7,8,9,10,11,12], "displayName": "1st 12"}}]},
+          {"bets": [{"id": "CS-D1-3", "amount": 5, "placement": {"type": "DOZEN_1ST", "numbers": [1,2,3,4,5,6,7,8,9,10,11,12], "displayName": "1st 12"}}]},
+          {"bets": [{"id": "CS-D1-4", "amount": 10, "placement": {"type": "DOZEN_1ST", "numbers": [1,2,3,4,5,6,7,8,9,10,11,12], "displayName": "1st 12"}}]},
+          {"bets": [{"id": "CS-D1-5", "amount": 15, "placement": {"type": "DOZEN_1ST", "numbers": [1,2,3,4,5,6,7,8,9,10,11,12], "displayName": "1st 12"}}]},
+          {"bets": [{"id": "CS-D1-6", "amount": 25, "placement": {"type": "DOZEN_1ST", "numbers": [1,2,3,4,5,6,7,8,9,10,11,12], "displayName": "1st 12"}}]},
+          {"bets": [{"id": "CS-D1-7", "amount": 40, "placement": {"type": "DOZEN_1ST", "numbers": [1,2,3,4,5,6,7,8,9,10,11,12], "displayName": "1st 12"}}]},
+          {"bets": [{"id": "CS-D1-8", "amount": 65, "placement": {"type": "DOZEN_1ST", "numbers": [1,2,3,4,5,6,7,8,9,10,11,12], "displayName": "1st 12"}}]},
+          {"bets": [{"id": "CS-D1-9", "amount": 105, "placement": {"type": "DOZEN_1ST", "numbers": [1,2,3,4,5,6,7,8,9,10,11,12], "displayName": "1st 12"}}]}
+        ],
+        "chainOnWin": "RESTART_CHAIN",
+        "chainOnLoss": "NEXT_CHAIN_STEP",
+        "chainLoop": false,
+        "gateBaseBets": true,
+        "nodes": [],
+        "rootNodeId": null
+      }
+    },
+    {
+      "id": "L-D2",
+      "name": "D2 Dozens",
+      "color": "#f59e0b",
+      "enabled": true,
+      "laneRole": "PRIMARY_CANDIDATE",
+      "multiplier": 1,
+      "progressionIndex": 0,
+      "rotatingIndex": 0,
+      "rotatingUnits": 1,
+      "sessionProfit": 0,
+      "chainIndex": 0,
+      "isTriggered": false,
+      "stipWins": 0,
+      "stipLosses": 0,
+      "stipProfit": 0,
+      "stipSpins": 0,
+      "eliminatedBetIds": [],
+      "bets": [
+        {
+          "id": "B-D2",
+          "amount": 5,
+          "placement": {
+            "type": "DOZEN_2ND",
+            "numbers": [13,14,15,16,17,18,19,20,21,22,23,24],
+            "displayName": "2nd 12"
+          }
+        }
+      ],
+      "triggerBets": [
+        {
+          "id": "T-D2-PIVOT",
+          "rule": "ABSENCE",
+          "threshold": 4,
+          "consecutive": true,
+          "active": true,
+          "watchPlacements": [
+            {
+              "type": "DOZEN_2ND",
+              "numbers": [13,14,15,16,17,18,19,20,21,22,23,24],
+              "displayName": "2nd 12"
+            }
+          ],
+          "betPlacements": [],
+          "onWinAction": "RESET",
+          "onWinValue": 1,
+          "onLossAction": "NEXT_CHAIN_STEP",
+          "onLossValue": 1
+        }
+      ],
+      "config": {
+        "strategyMode": "CHAIN",
+        "baseUnit": 5,
+        "onWinAction": "RESTART_CHAIN",
+        "onWinValue": 1,
+        "onLossAction": "NEXT_CHAIN_STEP",
+        "onLossValue": 1,
+        "onWinStipType": "NONE",
+        "onWinStipValue": 0,
+        "onLossStipType": "NONE",
+        "onLossStipValue": 0,
+        "resetOnSessionProfit": 300,
+        "useResetOnSessionProfit": true,
+        "secondaryFlatAmount": 5,
+        "sequence": "",
+        "onWinUnits": 0,
+        "onLossUnits": 0,
+        "minUnits": 1,
+        "rotateOnWin": false,
+        "rotateOnLoss": false,
+        "chainSteps": [
+          {"bets": [{"id": "CS-D2-1", "amount": 5, "placement": {"type": "DOZEN_2ND", "numbers": [13,14,15,16,17,18,19,20,21,22,23,24], "displayName": "2nd 12"}}]},
+          {"bets": [{"id": "CS-D2-2", "amount": 5, "placement": {"type": "DOZEN_2ND", "numbers": [13,14,15,16,17,18,19,20,21,22,23,24], "displayName": "2nd 12"}}]},
+          {"bets": [{"id": "CS-D2-3", "amount": 5, "placement": {"type": "DOZEN_2ND", "numbers": [13,14,15,16,17,18,19,20,21,22,23,24], "displayName": "2nd 12"}}]},
+          {"bets": [{"id": "CS-D2-4", "amount": 10, "placement": {"type": "DOZEN_2ND", "numbers": [13,14,15,16,17,18,19,20,21,22,23,24], "displayName": "2nd 12"}}]},
+          {"bets": [{"id": "CS-D2-5", "amount": 15, "placement": {"type": "DOZEN_2ND", "numbers": [13,14,15,16,17,18,19,20,21,22,23,24], "displayName": "2nd 12"}}]},
+          {"bets": [{"id": "CS-D2-6", "amount": 25, "placement": {"type": "DOZEN_2ND", "numbers": [13,14,15,16,17,18,19,20,21,22,23,24], "displayName": "2nd 12"}}]},
+          {"bets": [{"id": "CS-D2-7", "amount": 40, "placement": {"type": "DOZEN_2ND", "numbers": [13,14,15,16,17,18,19,20,21,22,23,24], "displayName": "2nd 12"}}]},
+          {"bets": [{"id": "CS-D2-8", "amount": 65, "placement": {"type": "DOZEN_2ND", "numbers": [13,14,15,16,17,18,19,20,21,22,23,24], "displayName": "2nd 12"}}]},
+          {"bets": [{"id": "CS-D2-9", "amount": 105, "placement": {"type": "DOZEN_2ND", "numbers": [13,14,15,16,17,18,19,20,21,22,23,24], "displayName": "2nd 12"}}]}
+        ],
+        "chainOnWin": "RESTART_CHAIN",
+        "chainOnLoss": "NEXT_CHAIN_STEP",
+        "chainLoop": false,
+        "gateBaseBets": true,
+        "nodes": [],
+        "rootNodeId": null
+      }
+    },
+    {
+      "id": "L-D3",
+      "name": "D3 Dozens",
+      "color": "#22c55e",
+      "enabled": true,
+      "laneRole": "PRIMARY_CANDIDATE",
+      "multiplier": 1,
+      "progressionIndex": 0,
+      "rotatingIndex": 0,
+      "rotatingUnits": 1,
+      "sessionProfit": 0,
+      "chainIndex": 0,
+      "isTriggered": false,
+      "stipWins": 0,
+      "stipLosses": 0,
+      "stipProfit": 0,
+      "stipSpins": 0,
+      "eliminatedBetIds": [],
+      "bets": [
+        {
+          "id": "B-D3",
+          "amount": 5,
+          "placement": {
+            "type": "DOZEN_3RD",
+            "numbers": [25,26,27,28,29,30,31,32,33,34,35,36],
+            "displayName": "3rd 12"
+          }
+        }
+      ],
+      "triggerBets": [
+        {
+          "id": "T-D3-PIVOT",
+          "rule": "ABSENCE",
+          "threshold": 4,
+          "consecutive": true,
+          "active": true,
+          "watchPlacements": [
+            {
+              "type": "DOZEN_3RD",
+              "numbers": [25,26,27,28,29,30,31,32,33,34,35,36],
+              "displayName": "3rd 12"
+            }
+          ],
+          "betPlacements": [],
+          "onWinAction": "RESET",
+          "onWinValue": 1,
+          "onLossAction": "NEXT_CHAIN_STEP",
+          "onLossValue": 1
+        }
+      ],
+      "config": {
+        "strategyMode": "CHAIN",
+        "baseUnit": 5,
+        "onWinAction": "RESTART_CHAIN",
+        "onWinValue": 1,
+        "onLossAction": "NEXT_CHAIN_STEP",
+        "onLossValue": 1,
+        "onWinStipType": "NONE",
+        "onWinStipValue": 0,
+        "onLossStipType": "NONE",
+        "onLossStipValue": 0,
+        "resetOnSessionProfit": 300,
+        "useResetOnSessionProfit": true,
+        "secondaryFlatAmount": 5,
+        "sequence": "",
+        "onWinUnits": 0,
+        "onLossUnits": 0,
+        "minUnits": 1,
+        "rotateOnWin": false,
+        "rotateOnLoss": false,
+        "chainSteps": [
+          {"bets": [{"id": "CS-D3-1", "amount": 5, "placement": {"type": "DOZEN_3RD", "numbers": [25,26,27,28,29,30,31,32,33,34,35,36], "displayName": "3rd 12"}}]},
+          {"bets": [{"id": "CS-D3-2", "amount": 5, "placement": {"type": "DOZEN_3RD", "numbers": [25,26,27,28,29,30,31,32,33,34,35,36], "displayName": "3rd 12"}}]},
+          {"bets": [{"id": "CS-D3-3", "amount": 5, "placement": {"type": "DOZEN_3RD", "numbers": [25,26,27,28,29,30,31,32,33,34,35,36], "displayName": "3rd 12"}}]},
+          {"bets": [{"id": "CS-D3-4", "amount": 10, "placement": {"type": "DOZEN_3RD", "numbers": [25,26,27,28,29,30,31,32,33,34,35,36], "displayName": "3rd 12"}}]},
+          {"bets": [{"id": "CS-D3-5", "amount": 15, "placement": {"type": "DOZEN_3RD", "numbers": [25,26,27,28,29,30,31,32,33,34,35,36], "displayName": "3rd 12"}}]},
+          {"bets": [{"id": "CS-D3-6", "amount": 25, "placement": {"type": "DOZEN_3RD", "numbers": [25,26,27,28,29,30,31,32,33,34,35,36], "displayName": "3rd 12"}}]},
+          {"bets": [{"id": "CS-D3-7", "amount": 40, "placement": {"type": "DOZEN_3RD", "numbers": [25,26,27,28,29,30,31,32,33,34,35,36], "displayName": "3rd 12"}}]},
+          {"bets": [{"id": "CS-D3-8", "amount": 65, "placement": {"type": "DOZEN_3RD", "numbers": [25,26,27,28,29,30,31,32,33,34,35,36], "displayName": "3rd 12"}}]},
+          {"bets": [{"id": "CS-D3-9", "amount": 105, "placement": {"type": "DOZEN_3RD", "numbers": [25,26,27,28,29,30,31,32,33,34,35,36], "displayName": "3rd 12"}}]}
+        ],
+        "chainOnWin": "RESTART_CHAIN",
+        "chainOnLoss": "NEXT_CHAIN_STEP",
+        "chainLoop": false,
+        "gateBaseBets": true,
+        "nodes": [],
+        "rootNodeId": null
+      }
+    },
+    {
+      "id": "L-SNIPE",
+      "name": "Snipes",
+      "color": "#a855f7",
+      "enabled": true,
+      "laneRole": "SUPPORT",
+      "multiplier": 1,
+      "progressionIndex": 0,
+      "rotatingIndex": 0,
+      "rotatingUnits": 1,
+      "sessionProfit": 0,
+      "chainIndex": 0,
+      "isTriggered": false,
+      "stipWins": 0,
+      "stipLosses": 0,
+      "stipProfit": 0,
+      "stipSpins": 0,
+      "eliminatedBetIds": [],
+      "bets": [
+        {
+          "id": "B-SN8",
+          "amount": 2,
+          "placement": {
+            "type": "STRAIGHT_UP",
+            "numbers": [8],
+            "displayName": "8"
+          }
+        },
+        {
+          "id": "B-SN17",
+          "amount": 2,
+          "placement": {
+            "type": "STRAIGHT_UP",
+            "numbers": [17],
+            "displayName": "17"
+          }
+        }
+      ],
+      "triggerBets": [],
+      "config": {
+        "strategyMode": "STATIC",
+        "baseUnit": 2,
+        "onWinAction": "RESET",
+        "onWinValue": 1,
+        "onLossAction": "DO_NOTHING",
+        "onLossValue": 1,
+        "onWinStipType": "NONE",
+        "onWinStipValue": 0,
+        "onLossStipType": "NONE",
+        "onLossStipValue": 0,
+        "resetOnSessionProfit": 150,
+        "useResetOnSessionProfit": false,
+        "sequence": "",
+        "onWinUnits": 0,
+        "onLossUnits": 0,
+        "minUnits": 1,
+        "rotateOnWin": false,
+        "rotateOnLoss": false,
+        "chainSteps": [],
+        "chainOnWin": "RESET",
+        "chainOnLoss": "RESET",
+        "chainLoop": false,
+        "gateBaseBets": false,
+        "nodes": [],
+        "rootNodeId": null
+      }
+    },
+    {
+      "id": "L-HEDGE",
+      "name": "0/00 Hedge",
+      "color": "#06b6d4",
+      "enabled": true,
+      "laneRole": "SUPPORT",
+      "multiplier": 1,
+      "progressionIndex": 0,
+      "rotatingIndex": 0,
+      "rotatingUnits": 1,
+      "sessionProfit": 0,
+      "chainIndex": 0,
+      "isTriggered": false,
+      "stipWins": 0,
+      "stipLosses": 0,
+      "stipProfit": 0,
+      "stipSpins": 0,
+      "eliminatedBetIds": [],
+      "bets": [
+        {
+          "id": "B-ZERO",
+          "amount": 1,
+          "placement": {
+            "type": "STRAIGHT_UP",
+            "numbers": [0],
+            "displayName": "0"
+          }
+        },
+        {
+          "id": "B-DZERO",
+          "amount": 1,
+          "placement": {
+            "type": "STRAIGHT_UP",
+            "numbers": [-1],
+            "displayName": "00"
+          }
+        }
+      ],
+      "triggerBets": [
+        {
+          "id": "T-HEDGE-ABSENCE",
+          "rule": "ABSENCE",
+          "threshold": 12,
+          "consecutive": true,
+          "active": true,
+          "watchPlacements": [
+            { "type": "STRAIGHT_UP", "numbers": [0], "displayName": "0" },
+            { "type": "STRAIGHT_UP", "numbers": [-1], "displayName": "00" }
+          ],
+          "betPlacements": [],
+          "onWinAction": "RESET",
+          "onWinValue": 1,
+          "onLossAction": "DO_NOTHING",
+          "onLossValue": 1
+        }
+      ],
+      "config": {
+        "strategyMode": "STATIC",
+        "baseUnit": 1,
+        "onWinAction": "RESET",
+        "onWinValue": 1,
+        "onLossAction": "DO_NOTHING",
+        "onLossValue": 1,
+        "onWinStipType": "NONE",
+        "onWinStipValue": 0,
+        "onLossStipType": "NONE",
+        "onLossStipValue": 0,
+        "resetOnSessionProfit": 0,
+        "useResetOnSessionProfit": false,
+        "sequence": "",
+        "onWinUnits": 0,
+        "onLossUnits": 0,
+        "minUnits": 1,
+        "rotateOnWin": false,
+        "rotateOnLoss": false,
+        "chainSteps": [],
+        "chainOnWin": "RESET",
+        "chainOnLoss": "RESET",
+        "chainLoop": false,
+        "gateBaseBets": true,
+        "nodes": [],
+        "rootNodeId": null
+      }
+    }
+  ]
+}
