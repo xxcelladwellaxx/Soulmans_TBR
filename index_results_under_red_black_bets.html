@@ -3129,26 +3129,30 @@ svg#chart circle {
 
 
 <style id="rail-position-fix">
-  /* FIX: Move spin results rail to appear directly below the betting table */
+  /* FIX: Spin-result balls stay directly under the outside bets row
+     (1-18 / EVEN / RED / BLACK / ODD / 19-36). JS sets exact top/left. */
   .rail {
-    position: relative !important;
-    left: auto !important;
-    top: auto !important;
-    transform: none !important;
-    margin-top: 8px !important;
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 3px !important;
-    z-index: 5000 !important;
-    pointer-events: none !important;
-    overflow: visible !important;
-    justify-content: center !important;
-    width: 100% !important;
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+    z-index:2147483000 !important;
+    pointer-events:none !important;
+    overflow:visible !important;
+    margin-top:0 !important;
+    padding:4px 8px !important;
+    border-radius:999px !important;
+    background:rgba(0,0,0,0.22) !important;
+    backdrop-filter:blur(5px) !important;
+    -webkit-backdrop-filter:blur(5px) !important;
   }
-  /* Ensure the feltBlurWrap and its parent allow the rail to show below */
-  #feltBlurWrap {
-    overflow: visible !important;
+  #feltBlurWrap { overflow: visible !important; }
+  @media screen and (max-width: 768px) {
+    .rail { gap:2px !important; padding:3px 5px !important; }
+    .rball { width:20px !important; height:20px !important; }
+    .rball.most-recent { width:32px !important; height:32px !important; }
+    .rball.most-recent .rball-number { font-size:14px !important; }
   }
 </style>
 </head>
@@ -4885,6 +4889,24 @@ const wheelBox=document.getElementById('wheelBox');
 const hotListEl=document.getElementById('hotList');
 const coldListEl=document.getElementById('coldList');
 const rail=document.getElementById('rail');
+function updateFixedResultsRailPosition(){
+  const felt = document.getElementById('felt');
+  const railEl = document.getElementById('rail');
+  if(!felt || !railEl) return;
+  const r = felt.getBoundingClientRect();
+  const railH = railEl.offsetHeight || 48;
+  // Keep it locked just under the table while still inside the viewport.
+  const top = Math.min(Math.max(r.bottom + 8, 72), window.innerHeight - railH - 8);
+  railEl.style.setProperty('--rail-fixed-top', top + 'px');
+}
+window.addEventListener('resize', updateFixedResultsRailPosition, {passive:true});
+window.addEventListener('orientationchange', ()=>setTimeout(updateFixedResultsRailPosition, 150), {passive:true});
+window.addEventListener('scroll', updateFixedResultsRailPosition, {passive:true});
+requestAnimationFrame(updateFixedResultsRailPosition);
+if(rail){
+  new MutationObserver(()=>requestAnimationFrame(updateFixedResultsRailPosition)).observe(rail, {childList:true, subtree:true});
+}
+setInterval(updateFixedResultsRailPosition, 1000);
 const banner=document.getElementById('banner');
 const bankEl=document.getElementById('bank');
 const stakeEl=document.getElementById('stake');
@@ -5824,6 +5846,16 @@ function cryptoUniformIndex(n){
   return buf[0] % n;
 }
 
+function casinoCryptoFloat(){
+  const buf = new Uint32Array(2);
+  (window.crypto || self.crypto).getRandomValues(buf);
+  // 53 random bits, matching Number's safe integer precision.
+  return ((buf[0] >>> 5) * 67108864 + (buf[1] >>> 6)) / 9007199254740992;
+}
+function casinoCryptoInt(minInclusive, maxInclusive){
+  return minInclusive + cryptoUniformIndex(maxInclusive - minInclusive + 1);
+}
+
 // Batched CSPRNG uniform-index helper for tight simulation loops.
 // Refills a large Uint32 buffer once per 4096 draws, rejection-samples
 // modulo-bias away for any n. Same statistical quality as cryptoUniformIndex,
@@ -6547,7 +6579,7 @@ function spinGame(){
   playWheelSound();
 
   const slice = 360/WHEEL_SEQ.length;
-  const preTurnsWheel = 8 + Math.floor(Math.random()*4); // 8-11 fast turns
+  const preTurnsWheel = casinoCryptoInt(8, 11); // 8-11 fast turns, crypto-randomized
   const preMsWheel = 2000; // Faster initial spin
   const midRot = wheelRotation - preTurnsWheel*360;
 
@@ -6587,7 +6619,7 @@ function spinGame(){
   
 
   // Ball lands at a RANDOM position around the wheel (0-360 degrees)
-  const ballFinalAngle = Math.random() * 360;
+  const ballFinalAngle = casinoCryptoFloat() * 360;
   
   // Calculate where pocket idx currently is (after current rotation)
   const currentPocketAngle = (idx*slice - 90 + wheelRotation) % 360;
@@ -6600,7 +6632,7 @@ function spinGame(){
   while (additionalRotation > 180) additionalRotation -= 360;
   while (additionalRotation < -180) additionalRotation += 360;
   
-  const decelTurnsWheel = 2 + Math.floor(Math.random()*3); // 2-4 decel turns
+  const decelTurnsWheel = casinoCryptoInt(2, 4); // 2-4 decel turns, crypto-randomized
   const finalRot = midRot - decelTurnsWheel*360 + additionalRotation;
 
   const decelMsWheel = 4500; // Faster deceleration
@@ -6616,7 +6648,7 @@ function spinGame(){
     let requiredHits = window._zeroAnimHasPlayed ? 6 : 2; 
     
     if (window._zeroHitsSinceAnim >= requiredHits) {
-      if (Math.random() < 0.35) {
+      if (casinoCryptoFloat() < 0.35) {
         playZeroAnim = true;
         window._zeroHitsSinceAnim = 0;
         window._zeroAnimHasPlayed = true;
@@ -17212,57 +17244,44 @@ function positionRail(svgRect, scaleX, scaleY){
   if(!svgRect) svgRect = svg.getBoundingClientRect();
   if(!scaleX) scaleX = svgRect.width / 1800;
   if(!scaleY) scaleY = svgRect.height / 1080;
-  
-  const bottomOfTable = svgRect.bottom; // Position below the entire table
-  const tableLeft = svgRect.left + (originX - 10) * scaleX;
-  const colBoxRight = (originX + cols * cellW + 10 + cellW * 0.6) * scaleX;
-  const tableRight = svgRect.left + colBoxRight;
 
-  // Mobile: use absolute positioning so rail scrolls with the page
-  var isMob = window.innerWidth <= 768 || window.innerHeight <= 600;
-  if(isMob){
-    var cardRect = card.getBoundingClientRect();
-    var railTopAbs = (bottomOfTable - cardRect.top) + 8; // 8px below table
-    var railLeftAbs = svgRect.left - cardRect.left + (originX - 10) * scaleX;
-    var railRightAbs = (cardRect.right - tableRight);
-    var railW = tableRight - tableLeft;
+  // Anchor the rail to the exact outside-bet row:
+  // 1-18 / EVEN / RED / BLACK / ODD / 19-36.
+  // These constants already exist in the table drawing code.
+  const outsideRowTopSvg = (typeof evenY !== 'undefined') ? evenY : (originY + rows*cellH + 26 + 56);
+  const outsideRowBottomSvg = outsideRowTopSvg + ((typeof evenH !== 'undefined') ? evenH : 56);
+  const railTop = svgRect.top + (outsideRowBottomSvg * scaleY) + 4;
 
-    rail.style.position = 'absolute';
-    rail.style.top = railTopAbs + 'px';
-    rail.style.left = railLeftAbs + 'px';
-    rail.style.right = Math.max(0, railRightAbs) + 'px';
-    rail.style.transform = 'none';
-    rail.style.maxWidth = railW + 'px';
-    rail.style.overflow = 'hidden';
-    rail.style.gap = '1px';
-    var ballSize = Math.max(14, Math.min(20, railW / 22));
-    rail.querySelectorAll('.rball').forEach(function(b){
-      b.style.width = ballSize + 'px';
-      b.style.height = ballSize + 'px';
-      b.style.minWidth = ballSize + 'px';
-      var num = b.querySelector('.rball-number');
-      if(num) num.style.fontSize = Math.max(7, ballSize * 0.5) + 'px';
-      var dots = b.querySelector('.rball-dots');
-      if(dots) dots.style.display = 'none';
-    });
-  } else {
-    // Desktop: fixed position - below the table
-    var railTop = bottomOfTable + 8; // 8px below table
-    rail.style.position = 'fixed';
-    rail.style.top = railTop + 'px';
-    rail.style.left = tableLeft + 'px';
-    rail.style.right = (window.innerWidth - tableRight) + 'px';
-    rail.style.transform = 'none';
-    rail.style.maxWidth = 'none';
-    rail.style.overflow = 'visible';
-    rail.style.gap = '3px';
-    rail.style.zIndex = '5000'; // Ensure rail stays below chart but above other elements
-  }
-  
-  // Position hints below the rail
-  positionSoulmanHints(bottomOfTable + 40, tableLeft, tableRight);
+  const tableLeft = svgRect.left + (originX * scaleX);
+  const tableRight = svgRect.left + ((originX + cols * cellW) * scaleX);
+  const railWidth = Math.max(240, tableRight - tableLeft);
+  const railLeft = tableLeft;
+
+  // Keep it fixed to the viewport so it is always visible while playing,
+  // but line it up under the outside bets instead of under the whole SVG.
+  rail.style.setProperty('position', 'fixed', 'important');
+  rail.style.setProperty('top', Math.round(railTop) + 'px', 'important');
+  rail.style.setProperty('left', Math.round(railLeft) + 'px', 'important');
+  rail.style.setProperty('right', 'auto', 'important');
+  rail.style.setProperty('width', Math.round(railWidth) + 'px', 'important');
+  rail.style.setProperty('max-width', 'calc(100vw - 16px)', 'important');
+  rail.style.setProperty('transform', 'none', 'important');
+  rail.style.setProperty('overflow', 'visible', 'important');
+  rail.style.setProperty('z-index', '2147483000', 'important');
+
+  // If the table is scaled very small, shrink older balls so the rail stays tidy.
+  const ballSize = Math.max(18, Math.min(28, railWidth / 30));
+  rail.querySelectorAll('.rball:not(.most-recent)').forEach(function(b){
+    b.style.setProperty('width', ballSize + 'px', 'important');
+    b.style.setProperty('height', ballSize + 'px', 'important');
+    b.style.setProperty('min-width', ballSize + 'px', 'important');
+    var num = b.querySelector('.rball-number');
+    if(num) num.style.setProperty('font-size', Math.max(8, ballSize * 0.42) + 'px', 'important');
+  });
+
+  // Hints should sit below the result balls, not over the outside bets.
+  positionSoulmanHints(railTop + 40, tableLeft, tableRight);
 }
-
 function positionSoulmanHints() { /* hint button positions itself */ }
 window.addEventListener('resize', positionToolbar);
 window.addEventListener('resize', ()=> positionRail());

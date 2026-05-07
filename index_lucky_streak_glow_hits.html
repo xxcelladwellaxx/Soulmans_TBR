@@ -89,6 +89,69 @@
 
   /* Hide legacy strategy tester labels (requested) */
   .strategy-tester-label, #strategyTesterLabel, #strategyText, .auto-strategy-label{ display:none !important; }
+
+  /* Lucky hit streak glow: intensifies with consecutive winning spins */
+  :root{
+    --luckyGlowLevel:0;
+    --luckyGlowAlpha:0;
+  }
+  .card.lucky-streak-glow::before{
+    filter:
+      drop-shadow(0 0 calc(8px + (var(--luckyGlowLevel) * 3px)) rgba(16,255,120,var(--luckyGlowAlpha)))
+      drop-shadow(0 0 calc(18px + (var(--luckyGlowLevel) * 7px)) rgba(16,255,120,calc(var(--luckyGlowAlpha) * .75)))
+      drop-shadow(0 0 calc(30px + (var(--luckyGlowLevel) * 11px)) rgba(0,255,90,calc(var(--luckyGlowAlpha) * .55))) !important;
+  }
+  #felt.lucky-streak-glow,
+  #feltSvg.lucky-streak-glow,
+  svg.lucky-streak-glow{
+    filter:
+      drop-shadow(0 0 calc(10px + (var(--luckyGlowLevel) * 4px)) rgba(16,255,120,var(--luckyGlowAlpha)))
+      drop-shadow(0 0 calc(24px + (var(--luckyGlowLevel) * 8px)) rgba(16,255,120,calc(var(--luckyGlowAlpha) * .70)))
+      drop-shadow(0 0 calc(46px + (var(--luckyGlowLevel) * 12px)) rgba(0,255,90,calc(var(--luckyGlowAlpha) * .45))) !important;
+    transition:filter .45s ease;
+  }
+  .luckyHitsRow{
+    position:absolute;
+    left:50%;
+    top:calc(100% + 54px);
+    transform:translateX(-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:34px;
+    padding:0;
+    background:transparent !important;
+    border:none !important;
+    box-shadow:none !important;
+    pointer-events:none;
+    z-index:5001;
+    white-space:nowrap;
+  }
+  .luckyHitsLabel{
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.8px;
+    color:#7bed9f;
+    text-shadow:0 2px 4px rgba(0,0,0,.95), 0 0 10px rgba(16,255,120,.65);
+    margin-right:4px;
+  }
+  .luckyHitPip{
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    color:#fff;
+    font-weight:900;
+    font-size:11px;
+    border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 0 10px rgba(16,255,120,.9), 0 4px 10px rgba(0,0,0,.75);
+  }
+  .luckyHitPip.red{background:var(--red)}
+  .luckyHitPip.black{background:var(--black)}
+  .luckyHitPip.green{background:var(--green)}
+
 </style>
 
  <style>
@@ -672,7 +735,7 @@
     width:calc(100% - 60px);
     max-width:calc(100% - 60px);
     margin:0 auto;
-    background:rgba(10,18,30,.25);
+    background:transparent !important;
     border:1px solid rgba(255,215,0,0.2);
     border-radius:12px;
     padding:10px;
@@ -791,7 +854,27 @@
   }
 
   /* Results rail: fixed under table bets, right-aligned, newest on right */
-  .rail{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:6px;display:flex;flex-direction:row;align-items:center;gap:3px;z-index:5000;pointer-events:none;overflow:visible;justify-content:center;}
+  .rail{
+    position:absolute;
+    left:50%;
+    top:100%;
+    transform:translateX(-50%);
+    margin-top:6px;
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:3px;
+    z-index:5000;
+    pointer-events:none;
+    overflow:visible;
+    justify-content:center;
+    background:transparent !important;
+    border:none !important;
+    box-shadow:none !important;
+    outline:none !important;
+    backdrop-filter:none !important;
+    padding:0 !important;
+  }
 
   /* Small hit-count text on each table number */
   .hitCountText{pointer-events:none;fill:rgba(255,255,255,0.85);font-size:12px;font-weight:800;}
@@ -3129,26 +3212,30 @@ svg#chart circle {
 
 
 <style id="rail-position-fix">
-  /* FIX: Move spin results rail to appear directly below the betting table */
+  /* FIX: Spin-result balls stay directly under the outside bets row
+     (1-18 / EVEN / RED / BLACK / ODD / 19-36). JS sets exact top/left. */
   .rail {
-    position: relative !important;
-    left: auto !important;
-    top: auto !important;
-    transform: none !important;
-    margin-top: 8px !important;
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 3px !important;
-    z-index: 5000 !important;
-    pointer-events: none !important;
-    overflow: visible !important;
-    justify-content: center !important;
-    width: 100% !important;
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+    z-index:2147483000 !important;
+    pointer-events:none !important;
+    overflow:visible !important;
+    margin-top:0 !important;
+    padding:4px 8px !important;
+    border-radius:999px !important;
+    background:rgba(0,0,0,0.22) !important;
+    backdrop-filter:blur(5px) !important;
+    -webkit-backdrop-filter:blur(5px) !important;
   }
-  /* Ensure the feltBlurWrap and its parent allow the rail to show below */
-  #feltBlurWrap {
-    overflow: visible !important;
+  #feltBlurWrap { overflow: visible !important; }
+  @media screen and (max-width: 768px) {
+    .rail { gap:2px !important; padding:3px 5px !important; }
+    .rball { width:20px !important; height:20px !important; }
+    .rball.most-recent { width:32px !important; height:32px !important; }
+    .rball.most-recent .rball-number { font-size:14px !important; }
   }
 </style>
 </head>
@@ -3214,7 +3301,7 @@ svg#chart circle {
           <div class="shortcuts-list">
             <div class="shortcut-item">
               <span class="shortcut-label">Settings:</span>
-              <span style="font-size:8px; color:#ffd700; font-weight:600; padding:2px 8px; background:#0b1322; border:1px solid rgba(255,215,0,.2); border-radius:3px;">S</span>
+              <span style="font-size:8px; color:#ffd700; font-weight:600; padding:2px 8px; background:#0b1322; border:1px solid rgba(255,215,0,.2); border-radius:3px;">9</span>
             </div>
             <div class="shortcut-item">
               <span class="shortcut-label">Spin:</span>
@@ -3934,6 +4021,7 @@ svg#chart circle {
           <div id="betAreaBlur" style="position:absolute;background:rgba(5,15,15,0.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:6px;z-index:0;pointer-events:none;display:none;box-shadow:0 0 15px rgba(255,215,0,0.5),0 0 30px rgba(255,215,0,0.25),0 0 50px rgba(255,215,0,0.1);transition:box-shadow 0.15s ease;"></div>
           <svg id="felt" viewBox="0 0 1800 1080" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Roulette betting layout" style="display:block; margin:0; padding:0; margin-top:0; position:relative; z-index:1;"></svg>
           <div class="rail" id="rail"></div>
+<div id="luckyHitsRow" class="luckyHitsRow"></div>
           <!-- Draggable/Resizable Auto-Play Chart Panel -->
           <div id="autoChartContainer" style="display:none;position:fixed;z-index:99999;box-sizing:border-box;border:2px solid rgba(255,211,77,0.55);border-radius:12px;overflow:visible;box-shadow:0 8px 32px rgba(0,0,0,0.8);">
             <!-- Drag Handle / Title Bar -->
@@ -4885,6 +4973,24 @@ const wheelBox=document.getElementById('wheelBox');
 const hotListEl=document.getElementById('hotList');
 const coldListEl=document.getElementById('coldList');
 const rail=document.getElementById('rail');
+function updateFixedResultsRailPosition(){
+  const felt = document.getElementById('felt');
+  const railEl = document.getElementById('rail');
+  if(!felt || !railEl) return;
+  const r = felt.getBoundingClientRect();
+  const railH = railEl.offsetHeight || 48;
+  // Keep it locked just under the table while still inside the viewport.
+  const top = Math.min(Math.max(r.bottom + 8, 72), window.innerHeight - railH - 8);
+  railEl.style.setProperty('--rail-fixed-top', top + 'px');
+}
+window.addEventListener('resize', updateFixedResultsRailPosition, {passive:true});
+window.addEventListener('orientationchange', ()=>setTimeout(updateFixedResultsRailPosition, 150), {passive:true});
+window.addEventListener('scroll', updateFixedResultsRailPosition, {passive:true});
+requestAnimationFrame(updateFixedResultsRailPosition);
+if(rail){
+  new MutationObserver(()=>requestAnimationFrame(updateFixedResultsRailPosition)).observe(rail, {childList:true, subtree:true});
+}
+setInterval(updateFixedResultsRailPosition, 1000);
 const banner=document.getElementById('banner');
 const bankEl=document.getElementById('bank');
 const stakeEl=document.getElementById('stake');
@@ -5824,6 +5930,16 @@ function cryptoUniformIndex(n){
   return buf[0] % n;
 }
 
+function casinoCryptoFloat(){
+  const buf = new Uint32Array(2);
+  (window.crypto || self.crypto).getRandomValues(buf);
+  // 53 random bits, matching Number's safe integer precision.
+  return ((buf[0] >>> 5) * 67108864 + (buf[1] >>> 6)) / 9007199254740992;
+}
+function casinoCryptoInt(minInclusive, maxInclusive){
+  return minInclusive + cryptoUniformIndex(maxInclusive - minInclusive + 1);
+}
+
 // Batched CSPRNG uniform-index helper for tight simulation loops.
 // Refills a large Uint32 buffer once per 4096 draws, rejection-samples
 // modulo-bias away for any n. Same statistical quality as cryptoUniformIndex,
@@ -6547,7 +6663,7 @@ function spinGame(){
   playWheelSound();
 
   const slice = 360/WHEEL_SEQ.length;
-  const preTurnsWheel = 8 + Math.floor(Math.random()*4); // 8-11 fast turns
+  const preTurnsWheel = casinoCryptoInt(8, 11); // 8-11 fast turns, crypto-randomized
   const preMsWheel = 2000; // Faster initial spin
   const midRot = wheelRotation - preTurnsWheel*360;
 
@@ -6587,7 +6703,7 @@ function spinGame(){
   
 
   // Ball lands at a RANDOM position around the wheel (0-360 degrees)
-  const ballFinalAngle = Math.random() * 360;
+  const ballFinalAngle = casinoCryptoFloat() * 360;
   
   // Calculate where pocket idx currently is (after current rotation)
   const currentPocketAngle = (idx*slice - 90 + wheelRotation) % 360;
@@ -6600,7 +6716,7 @@ function spinGame(){
   while (additionalRotation > 180) additionalRotation -= 360;
   while (additionalRotation < -180) additionalRotation += 360;
   
-  const decelTurnsWheel = 2 + Math.floor(Math.random()*3); // 2-4 decel turns
+  const decelTurnsWheel = casinoCryptoInt(2, 4); // 2-4 decel turns, crypto-randomized
   const finalRot = midRot - decelTurnsWheel*360 + additionalRotation;
 
   const decelMsWheel = 4500; // Faster deceleration
@@ -6616,7 +6732,7 @@ function spinGame(){
     let requiredHits = window._zeroAnimHasPlayed ? 6 : 2; 
     
     if (window._zeroHitsSinceAnim >= requiredHits) {
-      if (Math.random() < 0.35) {
+      if (casinoCryptoFloat() < 0.35) {
         playZeroAnim = true;
         window._zeroHitsSinceAnim = 0;
         window._zeroAnimHasPlayed = true;
@@ -17212,57 +17328,44 @@ function positionRail(svgRect, scaleX, scaleY){
   if(!svgRect) svgRect = svg.getBoundingClientRect();
   if(!scaleX) scaleX = svgRect.width / 1800;
   if(!scaleY) scaleY = svgRect.height / 1080;
-  
-  const bottomOfTable = svgRect.bottom; // Position below the entire table
-  const tableLeft = svgRect.left + (originX - 10) * scaleX;
-  const colBoxRight = (originX + cols * cellW + 10 + cellW * 0.6) * scaleX;
-  const tableRight = svgRect.left + colBoxRight;
 
-  // Mobile: use absolute positioning so rail scrolls with the page
-  var isMob = window.innerWidth <= 768 || window.innerHeight <= 600;
-  if(isMob){
-    var cardRect = card.getBoundingClientRect();
-    var railTopAbs = (bottomOfTable - cardRect.top) + 8; // 8px below table
-    var railLeftAbs = svgRect.left - cardRect.left + (originX - 10) * scaleX;
-    var railRightAbs = (cardRect.right - tableRight);
-    var railW = tableRight - tableLeft;
+  // Anchor the rail to the exact outside-bet row:
+  // 1-18 / EVEN / RED / BLACK / ODD / 19-36.
+  // These constants already exist in the table drawing code.
+  const outsideRowTopSvg = (typeof evenY !== 'undefined') ? evenY : (originY + rows*cellH + 26 + 56);
+  const outsideRowBottomSvg = outsideRowTopSvg + ((typeof evenH !== 'undefined') ? evenH : 56);
+  const railTop = svgRect.top + (outsideRowBottomSvg * scaleY) + 4;
 
-    rail.style.position = 'absolute';
-    rail.style.top = railTopAbs + 'px';
-    rail.style.left = railLeftAbs + 'px';
-    rail.style.right = Math.max(0, railRightAbs) + 'px';
-    rail.style.transform = 'none';
-    rail.style.maxWidth = railW + 'px';
-    rail.style.overflow = 'hidden';
-    rail.style.gap = '1px';
-    var ballSize = Math.max(14, Math.min(20, railW / 22));
-    rail.querySelectorAll('.rball').forEach(function(b){
-      b.style.width = ballSize + 'px';
-      b.style.height = ballSize + 'px';
-      b.style.minWidth = ballSize + 'px';
-      var num = b.querySelector('.rball-number');
-      if(num) num.style.fontSize = Math.max(7, ballSize * 0.5) + 'px';
-      var dots = b.querySelector('.rball-dots');
-      if(dots) dots.style.display = 'none';
-    });
-  } else {
-    // Desktop: fixed position - below the table
-    var railTop = bottomOfTable + 8; // 8px below table
-    rail.style.position = 'fixed';
-    rail.style.top = railTop + 'px';
-    rail.style.left = tableLeft + 'px';
-    rail.style.right = (window.innerWidth - tableRight) + 'px';
-    rail.style.transform = 'none';
-    rail.style.maxWidth = 'none';
-    rail.style.overflow = 'visible';
-    rail.style.gap = '3px';
-    rail.style.zIndex = '5000'; // Ensure rail stays below chart but above other elements
-  }
-  
-  // Position hints below the rail
-  positionSoulmanHints(bottomOfTable + 40, tableLeft, tableRight);
+  const tableLeft = svgRect.left + (originX * scaleX);
+  const tableRight = svgRect.left + ((originX + cols * cellW) * scaleX);
+  const railWidth = Math.max(240, tableRight - tableLeft);
+  const railLeft = tableLeft;
+
+  // Keep it fixed to the viewport so it is always visible while playing,
+  // but line it up under the outside bets instead of under the whole SVG.
+  rail.style.setProperty('position', 'fixed', 'important');
+  rail.style.setProperty('top', Math.round(railTop) + 'px', 'important');
+  rail.style.setProperty('left', Math.round(railLeft) + 'px', 'important');
+  rail.style.setProperty('right', 'auto', 'important');
+  rail.style.setProperty('width', Math.round(railWidth) + 'px', 'important');
+  rail.style.setProperty('max-width', 'calc(100vw - 16px)', 'important');
+  rail.style.setProperty('transform', 'none', 'important');
+  rail.style.setProperty('overflow', 'visible', 'important');
+  rail.style.setProperty('z-index', '2147483000', 'important');
+
+  // If the table is scaled very small, shrink older balls so the rail stays tidy.
+  const ballSize = Math.max(18, Math.min(28, railWidth / 30));
+  rail.querySelectorAll('.rball:not(.most-recent)').forEach(function(b){
+    b.style.setProperty('width', ballSize + 'px', 'important');
+    b.style.setProperty('height', ballSize + 'px', 'important');
+    b.style.setProperty('min-width', ballSize + 'px', 'important');
+    var num = b.querySelector('.rball-number');
+    if(num) num.style.setProperty('font-size', Math.max(8, ballSize * 0.42) + 'px', 'important');
+  });
+
+  // Hints should sit below the result balls, not over the outside bets.
+  positionSoulmanHints(railTop + 40, tableLeft, tableRight);
 }
-
 function positionSoulmanHints() { /* hint button positions itself */ }
 window.addEventListener('resize', positionToolbar);
 window.addEventListener('resize', ()=> positionRail());
@@ -23601,5 +23704,124 @@ window.bigWinFire = (function(){
 })();
 
 </script>
+
+<script>
+/* Lucky Streak Patch: glow grows on consecutive hits and resets on loss */
+(function(){
+  if (window.__luckyStreakPatchInstalled) return;
+  window.__luckyStreakPatchInstalled = true;
+
+  var luckyStreak = 0;
+  var luckyHits = [];
+
+  function rouletteColor(n){
+    n = Number(n);
+    if (n === 0) return 'green';
+    var red = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+    return red.has(n) ? 'red' : 'black';
+  }
+
+  function ensureLuckyRow(){
+    var row = document.getElementById('luckyHitsRow');
+    if (!row) {
+      row = document.createElement('div');
+      row.id = 'luckyHitsRow';
+      row.className = 'luckyHitsRow';
+      var rail = document.querySelector('.rail');
+      if (rail && rail.parentNode) rail.parentNode.insertBefore(row, rail.nextSibling);
+      else document.body.appendChild(row);
+    }
+    return row;
+  }
+
+  function renderLuckyHits(){
+    var row = ensureLuckyRow();
+    if (!luckyStreak) {
+      row.innerHTML = '<span class="luckyHitsLabel">HITS RESET</span>';
+      row.style.opacity = '0.75';
+      return;
+    }
+    row.style.opacity = '1';
+    var html = '<span class="luckyHitsLabel">HIT STREAK x' + luckyStreak + '</span>';
+    luckyHits.slice(-18).forEach(function(n){
+      html += '<span class="luckyHitPip ' + rouletteColor(n) + '">' + n + '</span>';
+    });
+    row.innerHTML = html;
+  }
+
+  function applyLuckyGlow(){
+    var level = Math.min(luckyStreak, 12);
+    var alpha = luckyStreak ? Math.min(0.18 + luckyStreak * 0.075, 0.95) : 0;
+    document.documentElement.style.setProperty('--luckyGlowLevel', String(level));
+    document.documentElement.style.setProperty('--luckyGlowAlpha', String(alpha));
+
+    var targets = [
+      document.querySelector('.card'),
+      document.getElementById('felt'),
+      document.getElementById('feltSvg'),
+      document.querySelector('#felt svg')
+    ].filter(Boolean);
+
+    targets.forEach(function(el){
+      if (luckyStreak) el.classList.add('lucky-streak-glow');
+      else el.classList.remove('lucky-streak-glow');
+    });
+  }
+
+  window.SoulmanLuckyStreak = {
+    hit:function(number){
+      luckyStreak += 1;
+      luckyHits.push(number);
+      if (luckyHits.length > 36) luckyHits.shift();
+      applyLuckyGlow();
+      renderLuckyHits();
+    },
+    loss:function(){
+      luckyStreak = 0;
+      luckyHits = [];
+      applyLuckyGlow();
+      renderLuckyHits();
+    },
+    reset:function(){
+      luckyStreak = 0;
+      luckyHits = [];
+      applyLuckyGlow();
+      renderLuckyHits();
+    },
+    get:function(){ return {streak:luckyStreak, hits:luckyHits.slice()}; }
+  };
+
+  function inferLatestResultNumber(){
+    var recent = document.querySelector('.rball.most-recent .rball-number') || document.querySelector('.rball.most-recent');
+    if (recent) {
+      var m = (recent.textContent || '').match(/\d+/);
+      if (m) return Number(m[0]);
+    }
+    return '';
+  }
+
+  function watchWinLossBanners(){
+    var banner = document.querySelector('.banner');
+    if (!banner) return;
+    var observer = new MutationObserver(function(){
+      if (!banner.classList.contains('show')) return;
+      var txt = (banner.textContent || '').toLowerCase();
+      var isWin = banner.classList.contains('win') || /\bwin\b|\bhit\b|paid|payout/.test(txt);
+      var isLoss = banner.classList.contains('loss') || /\bloss\b|\blose\b|lost|no win/.test(txt);
+      if (isWin) window.SoulmanLuckyStreak.hit(inferLatestResultNumber());
+      else if (isLoss) window.SoulmanLuckyStreak.loss();
+    });
+    observer.observe(banner, {attributes:true, childList:true, subtree:true, characterData:true});
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ renderLuckyHits(); watchWinLossBanners(); });
+  } else {
+    renderLuckyHits();
+    watchWinLossBanners();
+  }
+})();
+</script>
+
 </body>
 </html>

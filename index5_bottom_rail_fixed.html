@@ -89,6 +89,79 @@
 
   /* Hide legacy strategy tester labels (requested) */
   .strategy-tester-label, #strategyTesterLabel, #strategyText, .auto-strategy-label{ display:none !important; }
+
+/* ===== SMART PERFORMANCE PATCH ===== */
+
+/* ONLY remove the worst performance killers */
+.card::after,
+.card-side-fill,
+#momentOverlay{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+/* Keep wheel smooth by using GPU acceleration */
+.fixed-wheel-scale-wrapper,
+#fixedWheel,
+#wheel,
+.ball{
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Reduce hover lag on phones only */
+@media (hover:none){
+  .chip:hover,
+  .btn:hover,
+  .rball:hover{
+    transform:none !important;
+  }
+}
+
+/* Keep wheel scaling smaller so GPU doesn't choke */
+.fixed-wheel-scale-wrapper.spinning{
+  transform:scale(0.82) !important;
+}
+
+/* Faster click response */
+.chip,
+.btn{
+  transition: transform .05s linear !important;
+}
+
+/* Reduce animation spam WITHOUT killing wheel */
+.hitRect,
+.hitLine,
+.hitCorner,
+.hitBasket,
+.hitZero,
+.winHalo,
+.winHaloZero{
+  animation-duration:0.5s !important;
+  animation-iteration-count:1 !important;
+}
+
+/* Limit heavy background videos */
+.video-background{
+  will-change: opacity;
+}
+
+/* Prevent giant repaints */
+body{
+  overflow-x:hidden;
+}
+
+/* ===== END SMART PERFORMANCE PATCH ===== */
+
+
+@media screen and (max-width:768px){
+  .rail{
+    bottom:-4px !important;
+    transform:translateX(-50%) scale(0.95);
+  }
+}
+
 </style>
 
  <style>
@@ -791,7 +864,23 @@
   }
 
   /* Results rail: fixed under table bets, right-aligned, newest on right */
-  .rail{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:6px;display:flex;flex-direction:row;align-items:center;gap:3px;z-index:5000;pointer-events:none;overflow:visible;justify-content:center;}
+  .rail{
+  position:absolute;
+  left:50%;
+  bottom:-8px;
+  top:auto;
+  transform:translateX(-50%);
+  margin-top:0;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:3px;
+  z-index:5000;
+  pointer-events:none;
+  overflow:visible;
+  justify-content:center;
+  width:max-content;
+}
 
   /* Small hit-count text on each table number */
   .hitCountText{pointer-events:none;fill:rgba(255,255,255,0.85);font-size:12px;font-weight:800;}
@@ -3151,6 +3240,28 @@ svg#chart circle {
     overflow: visible !important;
   }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', ()=>{
+
+  // Pause hidden videos only
+  const vids = document.querySelectorAll('.video-background');
+
+  vids.forEach((v,i)=>{
+    if(i > 1){
+      try{
+        v.pause();
+      }catch(e){}
+    }
+  });
+
+  // Improve touch responsiveness
+  document.body.style.touchAction = 'manipulation';
+
+  console.log('SMART PERFORMANCE MODE ENABLED');
+});
+</script>
+
 </head>
 <body>
 

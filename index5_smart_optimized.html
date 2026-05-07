@@ -89,6 +89,71 @@
 
   /* Hide legacy strategy tester labels (requested) */
   .strategy-tester-label, #strategyTesterLabel, #strategyText, .auto-strategy-label{ display:none !important; }
+
+/* ===== SMART PERFORMANCE PATCH ===== */
+
+/* ONLY remove the worst performance killers */
+.card::after,
+.card-side-fill,
+#momentOverlay{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
+/* Keep wheel smooth by using GPU acceleration */
+.fixed-wheel-scale-wrapper,
+#fixedWheel,
+#wheel,
+.ball{
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Reduce hover lag on phones only */
+@media (hover:none){
+  .chip:hover,
+  .btn:hover,
+  .rball:hover{
+    transform:none !important;
+  }
+}
+
+/* Keep wheel scaling smaller so GPU doesn't choke */
+.fixed-wheel-scale-wrapper.spinning{
+  transform:scale(0.82) !important;
+}
+
+/* Faster click response */
+.chip,
+.btn{
+  transition: transform .05s linear !important;
+}
+
+/* Reduce animation spam WITHOUT killing wheel */
+.hitRect,
+.hitLine,
+.hitCorner,
+.hitBasket,
+.hitZero,
+.winHalo,
+.winHaloZero{
+  animation-duration:0.5s !important;
+  animation-iteration-count:1 !important;
+}
+
+/* Limit heavy background videos */
+.video-background{
+  will-change: opacity;
+}
+
+/* Prevent giant repaints */
+body{
+  overflow-x:hidden;
+}
+
+/* ===== END SMART PERFORMANCE PATCH ===== */
+
 </style>
 
  <style>
@@ -3151,6 +3216,28 @@ svg#chart circle {
     overflow: visible !important;
   }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', ()=>{
+
+  // Pause hidden videos only
+  const vids = document.querySelectorAll('.video-background');
+
+  vids.forEach((v,i)=>{
+    if(i > 1){
+      try{
+        v.pause();
+      }catch(e){}
+    }
+  });
+
+  // Improve touch responsiveness
+  document.body.style.touchAction = 'manipulation';
+
+  console.log('SMART PERFORMANCE MODE ENABLED');
+});
+</script>
+
 </head>
 <body>
 

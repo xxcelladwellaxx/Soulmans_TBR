@@ -89,6 +89,69 @@
 
   /* Hide legacy strategy tester labels (requested) */
   .strategy-tester-label, #strategyTesterLabel, #strategyText, .auto-strategy-label{ display:none !important; }
+
+  /* Lucky hit streak glow: intensifies with consecutive winning spins */
+  :root{
+    --luckyGlowLevel:0;
+    --luckyGlowAlpha:0;
+  }
+  .card.lucky-streak-glow::before{
+    filter:
+      drop-shadow(0 0 calc(8px + (var(--luckyGlowLevel) * 3px)) rgba(16,255,120,var(--luckyGlowAlpha)))
+      drop-shadow(0 0 calc(18px + (var(--luckyGlowLevel) * 7px)) rgba(16,255,120,calc(var(--luckyGlowAlpha) * .75)))
+      drop-shadow(0 0 calc(30px + (var(--luckyGlowLevel) * 11px)) rgba(0,255,90,calc(var(--luckyGlowAlpha) * .55))) !important;
+  }
+  #felt.lucky-streak-glow,
+  #feltSvg.lucky-streak-glow,
+  svg.lucky-streak-glow{
+    filter:
+      drop-shadow(0 0 calc(10px + (var(--luckyGlowLevel) * 4px)) rgba(16,255,120,var(--luckyGlowAlpha)))
+      drop-shadow(0 0 calc(24px + (var(--luckyGlowLevel) * 8px)) rgba(16,255,120,calc(var(--luckyGlowAlpha) * .70)))
+      drop-shadow(0 0 calc(46px + (var(--luckyGlowLevel) * 12px)) rgba(0,255,90,calc(var(--luckyGlowAlpha) * .45))) !important;
+    transition:filter .45s ease;
+  }
+  .luckyHitsRow{
+    position:absolute;
+    left:50%;
+    top:calc(100% + 195px);
+    transform:translateX(-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:34px;
+    padding:0;
+    background:transparent !important;
+    border:none !important;
+    box-shadow:none !important;
+    pointer-events:none;
+    z-index:5001;
+    white-space:nowrap;
+  }
+  .luckyHitsLabel{
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.8px;
+    color:#7bed9f;
+    text-shadow:0 2px 4px rgba(0,0,0,.95), 0 0 10px rgba(16,255,120,.65);
+    margin-right:4px;
+  }
+  .luckyHitPip{
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    display:grid;
+    place-items:center;
+    color:#fff;
+    font-weight:900;
+    font-size:11px;
+    border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 0 10px rgba(16,255,120,.9), 0 4px 10px rgba(0,0,0,.75);
+  }
+  .luckyHitPip.red{background:var(--red)}
+  .luckyHitPip.black{background:var(--black)}
+  .luckyHitPip.green{background:var(--green)}
+
 </style>
 
  <style>
@@ -301,13 +364,18 @@
   .card::before{
     content:"";
     position:absolute;
-    top:65px; left:-3px; right:-3px; bottom:-3px;
+    top:65px; left:-2px; right:-2px; bottom:-2px;
     border-radius:18px 18px 0 0;
     background:
       repeating-linear-gradient(
-        0deg,
-        #d4af37 0px, #f5d675 2px, #a07818 4px, #d4af37 6px, #f5d675 8px, #8b6914 10px, #d4af37 12px
-      );
+        45deg,
+        #8b6914 0px,
+        #d4af37 3px,
+        #ffe97f 6px,
+        #a07818 9px,
+        #d4af37 12px
+      ),
+      linear-gradient(#d4af37, #d4af37);
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
@@ -316,17 +384,17 @@
     padding:5px;
     z-index:1;
     pointer-events:none;
-    filter:drop-shadow(0 0 3px rgba(212,175,55,0.6));
+    filter:drop-shadow(0 0 3px rgba(212,175,55,0.65));
   }
-  /* Blurry band outside the gold rope */
+  /* Solid black outside the gold rope */
   .card::after{
     content:"";
     position:absolute;
     top:-25px; left:-30px; right:-30px; bottom:-30px;
     border-radius:28px 28px 0 0;
-    background:rgba(0,0,0,0.4);
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
+    background:#000;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
@@ -342,9 +410,9 @@
     top:0; bottom:0;
     z-index:4;
     pointer-events:none;
-    background:rgba(0,0,0,0.4);
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
+    background:#000;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
   }
   .card-side-fill.left{ left:0; width:calc((100vw - 1300px) / 2); }
   .card-side-fill.right{ right:0; width:calc((100vw - 1300px) / 2); }
@@ -672,7 +740,7 @@
     width:calc(100% - 60px);
     max-width:calc(100% - 60px);
     margin:0 auto;
-    background:rgba(10,18,30,.25);
+    background:transparent !important;
     border:1px solid rgba(255,215,0,0.2);
     border-radius:12px;
     padding:10px;
@@ -791,7 +859,27 @@
   }
 
   /* Results rail: fixed under table bets, right-aligned, newest on right */
-  .rail{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:6px;display:flex;flex-direction:row;align-items:center;gap:3px;z-index:5000;pointer-events:none;overflow:visible;justify-content:center;}
+  .rail{
+    position:absolute;
+    left:50%;
+    top:100%;
+    transform:translateX(-50%);
+    margin-top:145px;
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:3px;
+    z-index:5000;
+    pointer-events:none;
+    overflow:visible;
+    justify-content:center;
+    background:transparent !important;
+    border:none !important;
+    box-shadow:none !important;
+    outline:none !important;
+    backdrop-filter:none !important;
+    padding:0 !important;
+  }
 
   /* Small hit-count text on each table number */
   .hitCountText{pointer-events:none;fill:rgba(255,255,255,0.85);font-size:12px;font-weight:800;}
@@ -799,6 +887,7 @@
     width:28px;height:28px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:900;
     border:1px solid rgba(255,255,255,0.6); box-shadow:0 4px 10px rgba(0,0,0,.4);
     position:relative;transition:all 0.4s ease;flex-shrink:0;
+    pointer-events:auto;
   }
   .rball.red{background:var(--red)} .rball.black{background:var(--black)} .rball.green{background:var(--green)}
   
@@ -826,6 +915,32 @@
     border-radius:50%;
     background:rgba(255,255,255,0.4);
   }
+
+  .rball-delta{
+    position:absolute;
+    left:50%;
+    top:100%;
+    transform:translate(-50%, 4px);
+    display:none;
+    white-space:nowrap;
+    pointer-events:none;
+    padding:1px 4px;
+    border-radius:4px;
+    background:rgba(0,0,0,0.75);
+    color:#fff;
+    font-size:10px;
+    font-weight:900;
+    line-height:1.2;
+    text-shadow:0 1px 2px rgba(0,0,0,0.8);
+    box-shadow:0 2px 6px rgba(0,0,0,0.35);
+    z-index:50;
+  }
+  .rball:hover .rball-delta{
+    display:block;
+  }
+  .rball-delta.win{ color:#7dffad; }
+  .rball-delta.loss{ color:#ff8b8b; }
+  .rball-delta.draw{ color:#f4f4f5; }
   
   /* Progressive sizing: applied via inline styles in JS */
   /* Most recent = biggest, fading down to the left */
@@ -1518,8 +1633,8 @@
       opacity:1 !important;
     }
     .fixed-chips-container .chip.active:not(.chip-flipping):not(.chip-flipping-in-place){
-      width:62px !important;
-      height:62px !important;
+      width:46px !important;
+      height:46px !important;
       filter:brightness(1.4) saturate(1.5) contrast(1.3) !important;
       box-shadow:0 8px 14px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.6) !important;
       border:2px solid rgba(255,255,255,0.8) !important;
@@ -1714,8 +1829,55 @@
     transform:translateX(-50%) translateY(60px) !important;
     transition: transform 0.35s ease-in !important;
   }
+  .fixed-chips-container.tray-pull-peek{
+    transform:translateX(-50%) translateY(0) !important;
+    transition:transform 0.45s ease-out !important;
+  }
+  .tray-pull-hint{
+    position:fixed !important;
+    left:50% !important;
+    bottom:72px !important;
+    transform:translateX(-50%) !important;
+    z-index:1000000 !important;
+    pointer-events:none !important;
+    opacity:0 !important;
+    animation:trayPullHintFade 2.4s ease-out forwards !important;
+  }
+  .tray-pull-hint::before{
+    content:"" !important;
+    display:block !important;
+    width:0 !important;
+    height:0 !important;
+    margin:0 auto -2px !important;
+    border-left:15px solid transparent !important;
+    border-right:15px solid transparent !important;
+    border-bottom:20px solid #ffd700 !important;
+    filter:drop-shadow(0 0 10px rgba(255,215,0,0.8)) drop-shadow(0 3px 5px rgba(0,0,0,0.8)) !important;
+    animation:trayPullHintBounce 0.75s ease-in-out infinite !important;
+  }
+  .tray-pull-hint::after{
+    content:"" !important;
+    display:block !important;
+    width:8px !important;
+    height:34px !important;
+    margin:0 auto !important;
+    border-radius:999px !important;
+    background:#ffd700 !important;
+    box-shadow:0 0 14px rgba(255,215,0,0.75), 0 2px 8px rgba(0,0,0,0.8) !important;
+    animation:trayPullHintBounce 0.75s ease-in-out infinite !important;
+  }
+  @keyframes trayPullHintFade{
+    0%{opacity:0; transform:translateX(-50%) translateY(-8px);}
+    12%{opacity:1; transform:translateX(-50%) translateY(0);}
+    78%{opacity:1; transform:translateX(-50%) translateY(0);}
+    100%{opacity:0; transform:translateX(-50%) translateY(12px);}
+  }
+  @keyframes trayPullHintBounce{
+    0%,100%{transform:translateY(-8px);}
+    50%{transform:translateY(8px);}
+  }
   .fixed-chips-container .chip{
-    width:46px !important; height:46px !important; cursor:pointer !important; transition:all .2s ease !important;
+    width:46px !important; height:46px !important; cursor:pointer !important; transition:filter .2s ease, box-shadow .2s ease, border .2s ease !important;
     filter:brightness(1.2) saturate(1.3) contrast(1.1) !important;
     margin:0 !important; padding:0 !important; border:none !important;
     display:block !important; vertical-align:bottom !important;
@@ -1744,11 +1906,11 @@
     pointer-events: none;
   }
   .fixed-chips-container .chip{
-    transition: transform 0.4s ease-out, filter 0.3s ease-out, width 0.3s ease-out, height 0.3s ease-out, z-index 0s, box-shadow 0.3s ease-out, border 0.3s ease-out;
+    transition: filter 0.3s ease-out, z-index 0s, box-shadow 0.3s ease-out, border 0.3s ease-out;
   }
   
   .fixed-chips-container .chip:hover:not(.active):not(.disabled){
-    transform:scale(1.08) !important;
+    transform:none !important;
     z-index:10 !important;
     filter:brightness(1.3) saturate(1.4) contrast(1.2) !important;
     box-shadow:0 10px 16px rgba(0,0,0,0.8), 0 5px 10px rgba(0,0,0,0.6) !important;
@@ -1757,8 +1919,8 @@
   
   .fixed-chips-container .chip.active:not(.chip-flipping):not(.chip-flipping-in-place){
     z-index:100 !important;
-    filter:brightness(1.4) saturate(1.5) contrast(1.3) !important;
-    box-shadow:0 12px 20px rgba(0,0,0,0.8), 0 6px 12px rgba(0,0,0,0.6) !important;
+    filter:brightness(1.4) saturate(1.5) contrast(1.3) drop-shadow(0 3px 0 rgba(45,28,8,0.85)) drop-shadow(0 8px 2px rgba(0,0,0,0.55)) drop-shadow(0 18px 18px rgba(0,0,0,0.75)) !important;
+    box-shadow:inset 0 -5px 8px rgba(0,0,0,0.35), inset 0 4px 7px rgba(255,255,255,0.28), 0 16px 24px rgba(0,0,0,0.8), 0 7px 12px rgba(0,0,0,0.6) !important;
     border:3px solid rgba(255,255,255,0.8) !important;
   }
   
@@ -1777,9 +1939,9 @@
   
   /* Chip pulse animation - soft glowing heartbeat */
   @keyframes chipPulse {
-    0%   { transform: translateY(-18px) scale(1.2); box-shadow: 0 0 10px 3px rgba(33,193,255,0.6); }
-    50%  { transform: translateY(-18px) scale(1.28); box-shadow: 0 0 25px 8px rgba(33,193,255,0.9); }
-    100% { transform: translateY(-18px) scale(1.2); box-shadow: 0 0 10px 3px rgba(33,193,255,0.6); }
+    0%   { transform: translateY(-18px) scale(1); box-shadow: 0 0 10px 3px rgba(33,193,255,0.6); }
+    50%  { transform: translateY(-18px) scale(1); box-shadow: 0 0 25px 8px rgba(33,193,255,0.9); }
+    100% { transform: translateY(-18px) scale(1); box-shadow: 0 0 10px 3px rgba(33,193,255,0.6); }
   }
 
   
@@ -1789,13 +1951,13 @@
       transform: translateY(0px) scale(1, 1);
     }
     25% {
-      transform: translateY(-8px) scale(0, 1);
+      transform: translateY(-8px) scale(0.18, 1.03);
     }
     50% {
       transform: translateY(-14px) scale(1, 1);
     }
     75% {
-      transform: translateY(-16px) scale(0, 1);
+      transform: translateY(-16px) scale(0.18, 1.04);
     }
     100% {
       transform: translateY(-18px) scale(1, 1);
@@ -1808,13 +1970,13 @@
       transform: translateY(-18px) scale(1, 1);
     }
     25% {
-      transform: translateY(-18px) scale(0, 1);
+      transform: translateY(-18px) scale(0.18, 1.04);
     }
     50% {
       transform: translateY(-18px) scale(1, 1);
     }
     75% {
-      transform: translateY(-18px) scale(0, 1);
+      transform: translateY(-18px) scale(0.18, 1.04);
     }
     100% {
       transform: translateY(-18px) scale(1, 1);
@@ -1827,13 +1989,13 @@
       transform: translateY(0px) rotate(0deg) scale(1, 1);
     }
     25% {
-      transform: translateY(-8px) rotate(0deg) scale(0, 1);
+      transform: translateY(-8px) rotate(0deg) scale(0.18, 1.03);
     }
     50% {
       transform: translateY(-14px) rotate(0deg) scale(1, 1);
     }
     75% {
-      transform: translateY(-16px) rotate(0deg) scale(0, 1);
+      transform: translateY(-16px) rotate(0deg) scale(0.18, 1.04);
     }
     100% {
       transform: translateY(-18px) rotate(0deg) scale(1, 1);
@@ -1845,13 +2007,13 @@
       transform: translateY(-18px) rotate(0deg) scale(1, 1);
     }
     25% {
-      transform: translateY(-18px) rotate(0deg) scale(0, 1);
+      transform: translateY(-18px) rotate(0deg) scale(0.18, 1.04);
     }
     50% {
       transform: translateY(-18px) rotate(0deg) scale(1, 1);
     }
     75% {
-      transform: translateY(-18px) rotate(0deg) scale(0, 1);
+      transform: translateY(-18px) rotate(0deg) scale(0.18, 1.04);
     }
     100% {
       transform: translateY(-18px) rotate(0deg) scale(1, 1);
@@ -1864,13 +2026,13 @@
       transform: translateY(0px) rotate(0deg) scale(1, 1);
     }
     25% {
-      transform: translateY(-8px) rotate(0deg) scale(1, 0);
+      transform: translateY(-8px) rotate(0deg) scale(1.03, 0.18);
     }
     50% {
       transform: translateY(-14px) rotate(0deg) scale(1, 1);
     }
     75% {
-      transform: translateY(-16px) rotate(0deg) scale(1, 0);
+      transform: translateY(-16px) rotate(0deg) scale(1.04, 0.18);
     }
     100% {
       transform: translateY(-18px) rotate(0deg) scale(1, 1);
@@ -1882,13 +2044,13 @@
       transform: translateY(-18px) rotate(0deg) scale(1, 1);
     }
     25% {
-      transform: translateY(-18px) rotate(0deg) scale(1, 0);
+      transform: translateY(-18px) rotate(0deg) scale(1.04, 0.18);
     }
     50% {
       transform: translateY(-18px) rotate(0deg) scale(1, 1);
     }
     75% {
-      transform: translateY(-18px) rotate(0deg) scale(1, 0);
+      transform: translateY(-18px) rotate(0deg) scale(1.04, 0.18);
     }
     100% {
       transform: translateY(-18px) rotate(0deg) scale(1, 1);
@@ -1954,12 +2116,12 @@
   
   /* All chips with animation */
   .fixed-chips-container .chip{
-    transition: width 0.3s ease-out, height 0.3s ease-out, filter 0.3s ease-out !important;
+    transition: filter 0.3s ease-out, box-shadow 0.3s ease-out, border 0.3s ease-out !important;
   }
   
   .fixed-chips-container .chip.active:not(.chip-flipping):not(.chip-flipping-in-place){
-    width:50px !important; 
-    height:50px !important; 
+    width:46px !important; 
+    height:46px !important; 
     transform-origin: center center;
     border-radius: 50%;
   }
@@ -1972,34 +2134,39 @@
   
   /* Class to trigger the flip animation once - overrides everything when present */
   .fixed-chips-container .chip.chip-flipping {
-    width:50px !important; 
-    height:50px !important;
+    width:46px !important; 
+    height:46px !important;
     animation: chipFlipOnce 0.6s ease-in-out;
     transform-origin: center center;
     border-radius: 50%;
+    filter:brightness(1.45) saturate(1.45) contrast(1.25) drop-shadow(0 3px 0 rgba(45,28,8,0.9)) drop-shadow(0 9px 3px rgba(0,0,0,0.55)) drop-shadow(0 22px 20px rgba(0,0,0,0.8)) !important;
+    box-shadow:inset 0 -5px 8px rgba(0,0,0,0.42), inset 0 4px 7px rgba(255,255,255,0.30), 0 18px 26px rgba(0,0,0,0.82) !important;
   }
   
   /* Class to trigger flip-in-place animation when already selected */
   .fixed-chips-container .chip.chip-flipping-in-place {
-    width:50px !important; 
-    height:50px !important;
+    width:46px !important; 
+    height:46px !important;
     animation: chipFlipInPlace 0.6s ease-in-out !important;
     transform-origin: center center;
     border-radius: 50%;
+    filter:brightness(1.45) saturate(1.45) contrast(1.25) drop-shadow(0 3px 0 rgba(45,28,8,0.9)) drop-shadow(0 9px 3px rgba(0,0,0,0.55)) drop-shadow(0 22px 20px rgba(0,0,0,0.8)) !important;
+    box-shadow:inset 0 -5px 8px rgba(0,0,0,0.42), inset 0 4px 7px rgba(255,255,255,0.30), 0 18px 26px rgba(0,0,0,0.82) !important;
   }
 
   /* Class to trigger spin-out animation when chip is deselected */
   .fixed-chips-container .chip.chip-spinning-out {
-    width:50px !important; 
-    height:50px !important;
+    width:46px !important; 
+    height:46px !important;
     animation: chipSpinOut 0.6s ease-in-out !important;
     transform-origin: center center;
     border-radius: 50%;
+    filter:brightness(1.2) saturate(1.25) contrast(1.15) drop-shadow(0 2px 0 rgba(45,28,8,0.75)) drop-shadow(0 8px 2px rgba(0,0,0,0.45)) !important;
   }
   
   /* Rotate specific chips */
   .fixed-chips-container .chip.c1:not(.active){transform:rotate(0deg) !important;}
-  .fixed-chips-container .chip.c1:hover:not(.active):not(.disabled){transform:rotate(0deg) scale(1.08) !important;}
+  .fixed-chips-container .chip.c1:hover:not(.active):not(.disabled){transform:rotate(0deg) !important;}
 
   /* Circular clip for problem chips in fixed tray */
   .fixed-chips-container .chip.c1,
@@ -2010,36 +2177,36 @@
     object-fit: cover !important;
   }
   .fixed-chips-container .c1.chip-flipping {
-    width:50px !important; 
-    height:50px !important;
+    width:46px !important; 
+    height:46px !important;
     animation: chipFlipOnceRotated 0.6s ease-in-out !important;
   }
   .fixed-chips-container .c1.chip-flipping-in-place {
-    width:50px !important; 
-    height:50px !important;
+    width:46px !important; 
+    height:46px !important;
     animation: chipFlipInPlaceRotated 0.6s ease-in-out !important;
   }
   .fixed-chips-container .c1.chip-spinning-out {
-    width:50px !important; 
-    height:50px !important;
+    width:46px !important; 
+    height:46px !important;
     animation: chipSpinOutRotated 0.6s ease-in-out !important;
   }
   
   .fixed-chips-container .chip.c500:not(.active){transform:rotate(0deg) !important;}
-  .fixed-chips-container .chip.c500:hover:not(.active):not(.disabled){transform:rotate(0deg) scale(1.08) !important;}
+  .fixed-chips-container .chip.c500:hover:not(.active):not(.disabled){transform:rotate(0deg) !important;}
   .fixed-chips-container .c500.chip-flipping {
-    width:50px !important; 
-    height:50px !important;
+    width:46px !important; 
+    height:46px !important;
     animation: chipFlipOnceRotated500 0.6s ease-in-out !important;
   }
   .fixed-chips-container .c500.chip-flipping-in-place {
-    width:50px !important; 
-    height:50px !important;
+    width:46px !important; 
+    height:46px !important;
     animation: chipFlipInPlaceRotated500 0.6s ease-in-out !important;
   }
   .fixed-chips-container .c500.chip-spinning-out {
-    width:50px !important; 
-    height:50px !important;
+    width:46px !important; 
+    height:46px !important;
     animation: chipSpinOutRotated500 0.6s ease-in-out !important;
   }
 
@@ -2068,8 +2235,8 @@
   }
   
   #chipCursorFollower.show {
-    display: block !important;
-    opacity: 0.9 !important;
+    display: none !important;
+    opacity: 0 !important;
     cursor: grab !important;
   }
   
@@ -2089,7 +2256,8 @@
     left: 50% !important;
     transform: translate(-50%, -50%) rotate(-15deg) !important;
     transition: opacity 0.3s ease !important;
-    opacity: 0.8 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
   }
   
   #handChip img {
@@ -2100,8 +2268,9 @@
   }
   
   #handChip.show {
-    display: block !important;
-    opacity: 0.8 !important;
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
   }
 
   .fixed-controls-container{
@@ -2113,6 +2282,34 @@
     grid-template-columns:auto repeat(4, auto) !important;
     grid-template-rows:repeat(2, auto) !important;
     gap:0px !important;
+  }
+
+  #mobileBetModeToggle{
+    display:none;
+    position:fixed !important;
+    left:8px !important;
+    bottom:58px !important;
+    z-index:200000 !important;
+    min-width:84px !important;
+    padding:7px 9px !important;
+    border:1px solid rgba(255,215,0,0.65) !important;
+    border-radius:5px !important;
+    background:rgba(0,0,0,0.82) !important;
+    color:#ffd34d !important;
+    font-size:10px !important;
+    font-weight:900 !important;
+    letter-spacing:0.2px !important;
+    text-transform:uppercase !important;
+    box-shadow:0 4px 12px rgba(0,0,0,0.55) !important;
+    cursor:pointer !important;
+    transform:none !important;
+  }
+  #mobileBetModeToggle.mode-on{
+    background:rgba(255,211,77,0.18) !important;
+    color:#fff2a6 !important;
+  }
+  @media (max-width: 900px), (max-height: 600px){
+    #mobileBetModeToggle{ display:block !important; }
   }
   
   /* Fav set switcher — leftmost column, spans both rows */
@@ -2157,14 +2354,26 @@
   #fav1{
     grid-column: 3 !important;
     grid-row: 2 !important;
+    width:52px !important;
+    min-width:52px !important;
+    max-width:52px !important;
+    box-sizing:border-box !important;
   }
   #fav2{
     grid-column: 4 !important;
     grid-row: 2 !important;
+    width:52px !important;
+    min-width:52px !important;
+    max-width:52px !important;
+    box-sizing:border-box !important;
   }
   #fav3{
     grid-column: 5 !important;
     grid-row: 2 !important;
+    width:52px !important;
+    min-width:52px !important;
+    max-width:52px !important;
+    box-sizing:border-box !important;
   }
 
   /* Fixed Favorite Buttons at Bottom Left */
@@ -2216,6 +2425,15 @@
      top-right = clear (nth-child 5), bottom-left = unitMinus (nth-child 3),
      bottom-right = fav3 (last-child). */
   #favSetSwitch{ border-radius: 4px 0 0 4px !important; }
+  #favSetSwitch,
+  .fixed-controls-container .favBtn,
+  .fixed-controls-container .favBtn:hover,
+  .fixed-controls-container .favBtn:active,
+  .fixed-controls-container .favBtn.clicked,
+  .fixed-controls-container .favBtn.clicked:hover{
+    transform:none !important;
+    transition:color 0.1s, background 0.1s, border-color 0.1s !important;
+  }
   .fixed-controls-container .btn:nth-child(2){ border-radius:4px 0 0 0 !important; }
   .fixed-controls-container .btn:nth-child(5){ border-radius:0 4px 0 0 !important; }
   .fixed-controls-container .btn:nth-child(3){ border-radius:0 0 0 4px !important; }
@@ -2223,7 +2441,7 @@
   .fixed-controls-container .btn:hover{
     background:rgba(255,215,0,0.15) !important;
     border-color:rgba(255,215,0,0.7) !important;
-    transform:translateY(-1px);
+    transform:none !important;
     box-shadow:0 6px 16px rgba(0,0,0,.5), 0 0 12px rgba(255,215,0,0.15) !important;
     color:#fff !important;
   }
@@ -2250,7 +2468,7 @@
     transition:all 0.15s ease;
   }
   .fixed-controls-container .btn:active{
-    transform:translateY(0px);
+    transform:none !important;
     box-shadow:0 2px 6px rgba(0,0,0,.5) !important;
   }
   
@@ -2942,7 +3160,9 @@ svg#chart circle {
     pointer-events: none;
     z-index: 2147483647;
     transform: translate(-50%, 0%);
-    display: none;
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
   }
   .cursor-chip-clean img {
     width: 100%; height: 100%; object-fit: contain;
@@ -3129,28 +3349,36 @@ svg#chart circle {
 
 
 <style id="rail-position-fix">
-  /* FIX: Move spin results rail to appear directly below the betting table */
+  /* FIX: Spin-result balls stay directly under the outside bets row
+     (1-18 / EVEN / RED / BLACK / ODD / 19-36). JS sets exact top/left. */
   .rail {
-    position: relative !important;
-    left: auto !important;
-    top: auto !important;
-    transform: none !important;
-    margin-top: 8px !important;
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 3px !important;
-    z-index: 5000 !important;
-    pointer-events: none !important;
-    overflow: visible !important;
-    justify-content: center !important;
-    width: 100% !important;
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:3px !important;
+    z-index:2147483000 !important;
+    pointer-events:none !important;
+    overflow:visible !important;
+    margin-top:0 !important;
+    padding:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    border:none !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
   }
-  /* Ensure the feltBlurWrap and its parent allow the rail to show below */
-  #feltBlurWrap {
-    overflow: visible !important;
+  #feltBlurWrap { overflow: visible !important; }
+  @media screen and (max-width: 768px) {
+    .rail { gap:2px !important; padding:3px 5px !important; }
+    .rball { width:20px !important; height:20px !important; }
+    .rball.most-recent { width:32px !important; height:32px !important; }
+    .rball.most-recent .rball-number { font-size:14px !important; }
   }
 </style>
+
+
 </head>
 <body>
 
@@ -3214,7 +3442,7 @@ svg#chart circle {
           <div class="shortcuts-list">
             <div class="shortcut-item">
               <span class="shortcut-label">Settings:</span>
-              <span style="font-size:8px; color:#ffd700; font-weight:600; padding:2px 8px; background:#0b1322; border:1px solid rgba(255,215,0,.2); border-radius:3px;">S</span>
+              <span style="font-size:8px; color:#ffd700; font-weight:600; padding:2px 8px; background:#0b1322; border:1px solid rgba(255,215,0,.2); border-radius:3px;">9</span>
             </div>
             <div class="shortcut-item">
               <span class="shortcut-label">Spin:</span>
@@ -3934,6 +4162,7 @@ svg#chart circle {
           <div id="betAreaBlur" style="position:absolute;background:rgba(5,15,15,0.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:6px;z-index:0;pointer-events:none;display:none;box-shadow:0 0 15px rgba(255,215,0,0.5),0 0 30px rgba(255,215,0,0.25),0 0 50px rgba(255,215,0,0.1);transition:box-shadow 0.15s ease;"></div>
           <svg id="felt" viewBox="0 0 1800 1080" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Roulette betting layout" style="display:block; margin:0; padding:0; margin-top:0; position:relative; z-index:1;"></svg>
           <div class="rail" id="rail"></div>
+<div id="luckyHitsRow" class="luckyHitsRow"></div>
           <!-- Draggable/Resizable Auto-Play Chart Panel -->
           <div id="autoChartContainer" style="display:none;position:fixed;z-index:99999;box-sizing:border-box;border:2px solid rgba(255,211,77,0.55);border-radius:12px;overflow:visible;box-shadow:0 8px 32px rgba(0,0,0,0.8);">
             <!-- Drag Handle / Title Bar -->
@@ -4201,15 +4430,15 @@ svg#chart circle {
 
       <!-- Fixed Control Buttons at Bottom Right -->
       <div class="fixed-controls-container">
-        <button id="favSetSwitch" class="btn" title="Switch fav set: 1-3 / 4-6 / 7-9" style="writing-mode:vertical-rl; text-orientation:mixed; font-size:10px; font-weight:900; letter-spacing:1px;">Set 1</button>
+        <button id="favSetSwitch" class="btn" title="Switch fav set: 1-3 / 4-6 / 7-9 / 10-12 / 13-15" style="writing-mode:vertical-rl; text-orientation:mixed; font-size:10px; font-weight:900; letter-spacing:1px;">Set 1</button>
         <button id="unitPlus" class="btn unitBtn" title="+a unit: Increase bet by one unit amount">+a unit</button>
         <button id="unitMinus" class="btn unitBtn" title="-a unit: Decrease bet by one unit amount">-a unit</button>
         <button id="undo" class="btn" title="Removes last bet placed">Undo</button>
         <button id="clear" class="btn" title="Removes all bets from table">Clear</button>
         <button id="rebet" class="btn" onclick="doRebet();" title="Places same bets as previous spin">Rebet</button>
-        <button id="fav1" class="btn favBtn" title="Click once to save, twice to double, three times to triple">Fav 1</button>
-        <button id="fav2" class="btn favBtn" title="Click once to save, twice to double, three times to triple">Fav 2</button>
-        <button id="fav3" class="btn favBtn" title="Click once to save, twice to double, three times to triple">Fav 3</button>
+        <button id="fav1" class="btn favBtn" title="Click once to save, twice to double, three times to triple">Fav A</button>
+        <button id="fav2" class="btn favBtn" title="Click once to save, twice to double, three times to triple">Fav B</button>
+        <button id="fav3" class="btn favBtn" title="Click once to save, twice to double, three times to triple">Fav C</button>
       </div>
 
 <!-- Auto-Repeat Modal -->
@@ -4885,6 +5114,24 @@ const wheelBox=document.getElementById('wheelBox');
 const hotListEl=document.getElementById('hotList');
 const coldListEl=document.getElementById('coldList');
 const rail=document.getElementById('rail');
+function updateFixedResultsRailPosition(){
+  const felt = document.getElementById('felt');
+  const railEl = document.getElementById('rail');
+  if(!felt || !railEl) return;
+  const r = felt.getBoundingClientRect();
+  const railH = railEl.offsetHeight || 48;
+  // Keep it locked just under the table while still inside the viewport.
+  const top = Math.min(Math.max(r.bottom + 8, 72), window.innerHeight - railH - 8);
+  railEl.style.setProperty('--rail-fixed-top', top + 'px');
+}
+window.addEventListener('resize', updateFixedResultsRailPosition, {passive:true});
+window.addEventListener('orientationchange', ()=>setTimeout(updateFixedResultsRailPosition, 150), {passive:true});
+window.addEventListener('scroll', updateFixedResultsRailPosition, {passive:true});
+requestAnimationFrame(updateFixedResultsRailPosition);
+if(rail){
+  new MutationObserver(()=>requestAnimationFrame(updateFixedResultsRailPosition)).observe(rail, {childList:true, subtree:true});
+}
+setInterval(updateFixedResultsRailPosition, 1000);
 const banner=document.getElementById('banner');
 const bankEl=document.getElementById('bank');
 const stakeEl=document.getElementById('stake');
@@ -5824,6 +6071,16 @@ function cryptoUniformIndex(n){
   return buf[0] % n;
 }
 
+function casinoCryptoFloat(){
+  const buf = new Uint32Array(2);
+  (window.crypto || self.crypto).getRandomValues(buf);
+  // 53 random bits, matching Number's safe integer precision.
+  return ((buf[0] >>> 5) * 67108864 + (buf[1] >>> 6)) / 9007199254740992;
+}
+function casinoCryptoInt(minInclusive, maxInclusive){
+  return minInclusive + cryptoUniformIndex(maxInclusive - minInclusive + 1);
+}
+
 // Batched CSPRNG uniform-index helper for tight simulation loops.
 // Refills a large Uint32 buffer once per 4096 draws, rejection-samples
 // modulo-bias away for any n. Same statistical quality as cryptoUniformIndex,
@@ -6547,7 +6804,7 @@ function spinGame(){
   playWheelSound();
 
   const slice = 360/WHEEL_SEQ.length;
-  const preTurnsWheel = 8 + Math.floor(Math.random()*4); // 8-11 fast turns
+  const preTurnsWheel = casinoCryptoInt(8, 11); // 8-11 fast turns, crypto-randomized
   const preMsWheel = 2000; // Faster initial spin
   const midRot = wheelRotation - preTurnsWheel*360;
 
@@ -6587,7 +6844,7 @@ function spinGame(){
   
 
   // Ball lands at a RANDOM position around the wheel (0-360 degrees)
-  const ballFinalAngle = Math.random() * 360;
+  const ballFinalAngle = casinoCryptoFloat() * 360;
   
   // Calculate where pocket idx currently is (after current rotation)
   const currentPocketAngle = (idx*slice - 90 + wheelRotation) % 360;
@@ -6600,7 +6857,7 @@ function spinGame(){
   while (additionalRotation > 180) additionalRotation -= 360;
   while (additionalRotation < -180) additionalRotation += 360;
   
-  const decelTurnsWheel = 2 + Math.floor(Math.random()*3); // 2-4 decel turns
+  const decelTurnsWheel = casinoCryptoInt(2, 4); // 2-4 decel turns, crypto-randomized
   const finalRot = midRot - decelTurnsWheel*360 + additionalRotation;
 
   const decelMsWheel = 4500; // Faster deceleration
@@ -6616,7 +6873,7 @@ function spinGame(){
     let requiredHits = window._zeroAnimHasPlayed ? 6 : 2; 
     
     if (window._zeroHitsSinceAnim >= requiredHits) {
-      if (Math.random() < 0.35) {
+      if (casinoCryptoFloat() < 0.35) {
         playZeroAnim = true;
         window._zeroHitsSinceAnim = 0;
         window._zeroAnimHasPlayed = true;
@@ -6804,6 +7061,15 @@ document.addEventListener('keydown', (e)=>{
   if(e.key === '`'){ e.preventDefault(); toggleMultiSelectMode(); return; }
   // Escape also clears multi-select
   if(e.key === 'Escape' && multiSelectMode){ exitMultiSelectMode(); return; }
+  // In backtick move mode, arrow keys nudge selected chip stacks freely.
+  if(multiSelectMode && multiSelectedBets.size > 0 && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){
+    e.preventDefault();
+    const step = e.shiftKey ? 50 : (e.altKey ? 3 : 12);
+    const dx = e.key === 'ArrowLeft' ? -step : (e.key === 'ArrowRight' ? step : 0);
+    const dy = e.key === 'ArrowUp' ? -step : (e.key === 'ArrowDown' ? step : 0);
+    _moveSelectedBetsBy(dx, dy, true);
+    return;
+  }
 });
 
 // ===== MULTI-SELECT CHIP SYSTEM (backtick key) =====
@@ -6820,7 +7086,7 @@ function toggleMultiSelectMode(){
   } else {
     multiSelectMode = true;
     multiSelectedBets.clear();
-    _showMultiSelectBanner('Multi-select ON — click chips to add, drag to move group, ` or ESC to exit');
+    _showMultiSelectBanner('Move mode ON — click stacks or drag a box to select, arrows/drag to move, ` or ESC to exit');
     _updateMultiSelectIndicator();
     drawChipGhosts(); // refresh so rings can render
   }
@@ -6852,21 +7118,83 @@ function _updateMultiSelectIndicator(){
   if(!el || !multiSelectMode) return;
   const count = multiSelectedBets.size;
   if(count === 0){
-    el.textContent = 'Multi-select ON — click chips to add, ` or ESC to exit';
+    el.textContent = 'Move mode ON — click stacks or drag a box to select, arrows/drag to move, ` or ESC to exit';
   } else {
-    el.textContent = `Multi-select: ${count} chip${count===1?'':'s'} selected — drag any to move all, ` + '`' + ' or ESC to exit';
+    el.textContent = `Move mode: ${count} chip${count===1?'':'s'} selected — drag, arrow keys move, Shift=fast, Alt=fine, wraps at edges, ` + '`' + ' or ESC to exit';
   }
 }
 // Toggle a bet's membership in the selection set
 function toggleMultiSelectBet(bet){
   if(!multiSelectMode || !bet) return;
-  if(multiSelectedBets.has(bet)){
-    multiSelectedBets.delete(bet);
-  } else {
-    multiSelectedBets.add(bet);
-  }
+  // Click-select the whole visual stack at this anchor. That feels natural on
+  // the tray/table because stacked chips overlap and are hard to pick one-by-one.
+  const ax = bet.anchor?.x, ay = bet.anchor?.y;
+  const stack = bets.filter(b => b && b.anchor && Math.hypot(b.anchor.x - ax, b.anchor.y - ay) < 2);
+  const allAlreadySelected = stack.length > 0 && stack.every(b => multiSelectedBets.has(b));
+  stack.forEach(b => {
+    if(allAlreadySelected) multiSelectedBets.delete(b);
+    else multiSelectedBets.add(b);
+  });
   _updateMultiSelectIndicator();
   drawChipGhosts();
+}
+
+function _multiSelectWrapBounds(){
+  // SVG-space rectangle for the playable table. Selection/move wraps inside this
+  // rectangle instead of refunding when it crosses an edge.
+  return {
+    left: originX - zeroW - 50,
+    right: originX + cols * cellW + colBoxW + 50,
+    top: originY - 50,
+    bottom: evenY + evenH + 50
+  };
+}
+function _wrapPointToEndlessTable(x, y){
+  const b = _multiSelectWrapBounds();
+  const w = Math.max(1, b.right - b.left);
+  const h = Math.max(1, b.bottom - b.top);
+  while(x < b.left) x += w;
+  while(x > b.right) x -= w;
+  while(y < b.top) y += h;
+  while(y > b.bottom) y -= h;
+  return {x, y};
+}
+function _moveSelectedBetsBy(dx, dy, recordUndo=true){
+  if(!multiSelectMode || !multiSelectedBets.size) return;
+  const movedBets = [];
+  multiSelectedBets.forEach(bet => {
+    if(!bet || !bet.anchor) return;
+    const fromX = bet.anchor.x, fromY = bet.anchor.y;
+    const wrapped = _wrapPointToEndlessTable(fromX + dx, fromY + dy);
+    bet.anchor = {x: wrapped.x, y: wrapped.y};
+    movedBets.push({bet, fromX, fromY, fromType: bet.type, fromNums: Array.from(bet.nums), fromDesc: bet.desc});
+  });
+  if(recordUndo && movedBets.length) addUndoOperation({type:'group_move', movedBets});
+  _updateMultiSelectIndicator();
+  drawChipGhosts();
+  updateStake();
+}
+function _selectBetsInSvgRect(x1, y1, x2, y2){
+  const left = Math.min(x1,x2), right = Math.max(x1,x2);
+  const top = Math.min(y1,y2), bottom = Math.max(y1,y2);
+  let added = 0;
+  bets.forEach(b => {
+    if(b && b.anchor && b.anchor.x >= left && b.anchor.x <= right && b.anchor.y >= top && b.anchor.y <= bottom){
+      if(!multiSelectedBets.has(b)){ multiSelectedBets.add(b); added++; }
+    }
+  });
+  _updateMultiSelectIndicator();
+  drawChipGhosts();
+  return added;
+}
+function _isNearAnyBetChip(x, y, selectedOnly=false){
+  const tol = 34;
+  for(const b of bets){
+    if(!b || !b.anchor) continue;
+    if(selectedOnly && !multiSelectedBets.has(b)) continue;
+    if(Math.hypot(x - b.anchor.x, y - b.anchor.y) <= tol) return true;
+  }
+  return false;
 }
 
 
@@ -6974,12 +7302,7 @@ function getCellAt(x,y){
 }
 // Helper function to show/hide chip indicators
 function showChipIndicators() {
-  const chipCursorFollower = document.getElementById('chipCursorFollower');
-  const handChip = document.getElementById('handChip');
-  if (chipCursorFollower) chipCursorFollower.classList.add('show');
-  if (handChip) handChip.classList.add('show');
-  // Add hand cursor class to body when chip is being held
-  document.body.classList.add('chip-held');
+  hideChipIndicators();
 }
 
 function hideChipIndicators() {
@@ -7486,6 +7809,25 @@ function showTotalMinimumMessage(){
   banner.className = 'banner draw show';
   setTimeout(()=>banner.classList.remove('show'), 2600);
 }
+let trayPullHintShownThisGame = false;
+function showFirstBetTrayPullHint(force){
+  if(trayPullHintShownThisGame && !force) return;
+  trayPullHintShownThisGame = true;
+  const chipTray = document.querySelector('.fixed-chips-container');
+  if(!chipTray) return;
+
+  const oldHint = document.getElementById('trayPullHint');
+  if(oldHint) oldHint.remove();
+
+  const hint = document.createElement('div');
+  hint.id = 'trayPullHint';
+  hint.className = 'tray-pull-hint';
+  document.body.appendChild(hint);
+
+  chipTray.classList.add('tray-pull-peek');
+  setTimeout(() => chipTray.classList.remove('tray-pull-peek'), 1500);
+  setTimeout(() => hint.remove(), 2600);
+}
 function addBet(type,nums,amount,desc,anchor){
   if(spinning){return;}
 
@@ -7559,6 +7901,7 @@ function addBet(type,nums,amount,desc,anchor){
   // Play "place your bets please" on first bet
   if(!firstBetPlaced){
     firstBetPlaced = true;
+    showFirstBetTrayPullHint();
     if(settings.speechVolume > 0) {
       // Alternate between two audio files every 3 spins
       const cycleOf3 = Math.floor(series.length / 3);
@@ -7747,6 +8090,8 @@ function resolveRound(resultLabel, noBets){
     // Update board and audit trail even if no bets were placed (needed for observation phases)
     pushResultBall(resultLabel); refreshHotCold(); positionToolbar(); chartPush(bank);
     rounds.push({ bankAfter: bank, bankBefore: before, delta: 0, staked: 0, result: resultLabel, bets: [], classifiedBets: [], totalPayout: 0 });
+    const noBetBall = rail && rail.querySelector('.rball:last-child');
+    if(noBetBall) setResultBallDelta(noBetBall, 0);
     
     rebetClicks = 0;
     
@@ -7974,6 +8319,8 @@ function resolveRound(resultLabel, noBets){
   }
   
   rounds.push({ bankAfter: bank, bankBefore: before + stakedNow, delta, staked: stakedNow, result: resultLabel, bets: snapshot, classifiedBets: _classifiedBets, totalPayout: winTotal });
+  const latestResultBall = rail && rail.querySelector('.rball:last-child');
+  if(latestResultBall) setResultBallDelta(latestResultBall, delta);
   // Track hit/miss accuracy
   if(snapshot.length > 0) trackBetAccuracy(net);
   // Mark the result ball in the rail with a green ring if overall positive cashflow
@@ -8765,6 +9112,20 @@ function isOnBettingArea(svgX, svgY) {
   return svgX >= leftEdge && svgX <= rightEdge && svgY >= topEdge && svgY <= bottomEdge;
 }
 
+function isDirectBetTarget(svgX, svgY) {
+  for(const z of zeroSplits){ if(inRect(svgX, svgY, z)) return true; }
+  if(ALLOW_00_0_SPLIT && inRect(svgX, svgY, zeroSplitZone)) return true;
+  for(const key of Object.keys(outsideCols)){ if(inRect(svgX, svgY, outsideCols[key])) return true; }
+  for(const s of streetSplits){ if(inRect(svgX, svgY, s)) return true; }
+  for(const s of streets){ if(inRect(svgX, svgY, s)) return true; }
+  for(const d of dozens){ if(inRect(svgX, svgY, d)) return true; }
+  for(const e of evens){ if(inRect(svgX, svgY, e)) return true; }
+  if(inRect(svgX, svgY, dZeroSlot) || inRect(svgX, svgY, zeroSlot)) return true;
+  if(inRect(svgX, svgY, trioZone_0_00_2) || inRect(svgX, svgY, trioZone_0_00_3)) return true;
+  if(inRect(svgX, svgY, basketZone)) return true;
+  return !!getCellAt(svgX, svgY);
+}
+
 // Track whether current touch is on a bet zone (so touchend knows what to do)
 window._touchIsOnBet = false;
 
@@ -8775,6 +9136,7 @@ if(isTouchDevice) {
   //   650ms on a chip  → remove top chip (one chip)
   //   3000ms on a chip → delete entire stack at that position
   const isPhone = /Mobile|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Android.*Mobile/i.test(navigator.userAgent) && !/(tablet|ipad|playbook|silk)/i.test(navigator.userAgent);
+  let lookPan = null;
 
   svg.addEventListener('touchstart', (ev) => {
     if(ev.touches.length > 1) return; // ignore multi-touch
@@ -8859,17 +9221,36 @@ if(isTouchDevice) {
         }
       }, 3000);
 
-    } else if(isOnBettingArea(x, y)) {
+    } else if(isDirectBetTarget(x, y)) {
       // On empty betting area — always preventDefault so scroll doesn't eat the tap
       ev.preventDefault();
       window._touchIsOnBet = true;
       handleMove(ev);
     } else {
       window._touchIsOnBet = false;
+      if(isPhone){
+        lookPan = {
+          startX: touch.clientX,
+          startY: touch.clientY,
+          scrollX: window.scrollX || document.documentElement.scrollLeft || 0,
+          scrollY: window.scrollY || document.documentElement.scrollTop || 0
+        };
+      }
     }
   }, {passive: false});
 
+  svg.addEventListener('touchmove', (ev) => {
+    if(!lookPan || window._touchIsOnBet || ev.touches.length !== 1) return;
+    const touch = ev.touches[0];
+    const dx = touch.clientX - lookPan.startX;
+    const dy = touch.clientY - lookPan.startY;
+    if(Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+    ev.preventDefault();
+    window.scrollTo(lookPan.scrollX - dx, lookPan.scrollY - dy);
+  }, {passive:false});
+
   svg.addEventListener('touchend', (ev) => {
+    lookPan = null;
     // Clear both long-press timers
     if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; }
     if(longPressTimer3s){ clearTimeout(longPressTimer3s); longPressTimer3s = null; }
@@ -8896,6 +9277,7 @@ if(isTouchDevice) {
   }, {passive: false});
 
   svg.addEventListener('touchcancel', () => {
+    lookPan = null;
     if(longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; }
     if(longPressTimer3s){ clearTimeout(longPressTimer3s); longPressTimer3s = null; }
     window._longPressRemoveFired = false;
@@ -9476,18 +9858,12 @@ function completeDraggingStack(ev) {
   draggedStack.forEach(cd => { if (cd.bet) delete cd.bet._hidden; });
   const {x, y} = clientToSvg(ev);
   
-  // ── MULTI-SELECT GROUP DROP ─────────────────────────────────────────────
-  // Each bet is offset by the same (dx, dy) as the cursor moved from the
-  // stack center, then each bet finds its own target zone at its new position
-  // and gets remapped (so e.g. a middle-dozen shifted right becomes 3rd-dozen).
+  // ── MULTI-SELECT FREE MOVE DROP ──────────────────────────────────────────
+  // Backtick move mode is a visual-position tool: it keeps each bet's roulette
+  // definition intact and only changes where the chips/stack are drawn. When a
+  // chip crosses a table edge it wraps to the opposite edge for an endless-table
+  // feel instead of refunding or cancelling the move.
   if(window._multiSelectGroupDrag && draggedStack.length > 0){
-    // Compute drag delta: cursor moved from center (center+offset = cursor)
-    // So the chips should each shift by (cursor - originalCenter).
-    // The stack center was captured during startDraggingStack; we reconstruct
-    // it as (x + stackDragOffset.x, y + stackDragOffset.y)... wait that IS
-    // the new center. Delta = newCenter - oldCenter. But oldCenter averaged
-    // all original positions. We stored cd.originalX/Y per chip — compute
-    // their centroid and derive delta from there.
     let oldCx = 0, oldCy = 0;
     draggedStack.forEach(cd => { oldCx += cd.originalX; oldCy += cd.originalY; });
     oldCx /= draggedStack.length; oldCy /= draggedStack.length;
@@ -9495,89 +9871,15 @@ function completeDraggingStack(ev) {
     const newCy = y + stackDragOffset.y;
     const dx = newCx - oldCx;
     const dy = newCy - oldCy;
-    
-    // Check if any chip lands outside the table — if so, treat as refund
-    // (match existing behavior of refunding off-table drops).
-    let anyOffTable = false;
-    const targets = []; // parallel to draggedStack
-    for(const cd of draggedStack){
-      const newX = cd.originalX + dx;
-      const newY = cd.originalY + dy;
-      if(!isWithinTableBoundaries(newX, newY)){ anyOffTable = true; break; }
-      const tgt = _resolveTargetBetInfo(newX, newY);
-      if(!tgt){ anyOffTable = true; break; } // treat non-bettable as off-table
-      targets.push(tgt);
-    }
-    
-    if(anyOffTable){
-      // Restore chips to their original positions (don't refund — user likely
-      // misclicked; refunding a whole group to bank would be too destructive).
-      isDraggingStack = false;
-      isDraggingChips = false;
-      window._multiSelectGroupDrag = false;
-      draggedStack = [];
-      stackDragOffset = {x:0, y:0};
-      draggedStackTotalValue = 0;
-      resetCursorAfterStackDragging();
-      drawChipGhosts();
-      banner.textContent = 'Group drop cancelled (off table or invalid zone)';
-      banner.className = 'banner draw show';
-      setTimeout(()=>banner.classList.remove('show'), 1800);
-      return;
-    }
-    
-    // Strict-mode: pre-check per-type and table-wide caps for the new positions.
-    // Build projected totals: start from current bets minus what we're moving,
-    // then add the new targets.
-    const isStrictGroup = (typeof gameMode === 'undefined' || gameMode === 'strict');
-    if(isStrictGroup){
-      const draggedSet = new Set(draggedStack.map(cd => cd.bet));
-      const posTotals = {};
-      bets.forEach(b => {
-        if(draggedSet.has(b)) return;
-        const pk = `${Math.round(b.anchor.x*10)/10}|${Math.round(b.anchor.y*10)/10}`;
-        posTotals[pk] = (posTotals[pk] || 0) + b.amount;
-      });
-      let blocked = null;
-      let projectedTableTotal = bets.reduce((s,b)=> draggedSet.has(b) ? s : s+b.amount, 0);
-      for(let i=0;i<draggedStack.length;i++){
-        const amt = draggedStack[i].bet.amount;
-        const tgt = targets[i];
-        const pk = `${Math.round(tgt.anchor.x*10)/10}|${Math.round(tgt.anchor.y*10)/10}`;
-        const typeMax = getTypeMax(tgt.type);
-        const cur = posTotals[pk] || 0;
-        if(cur + amt > typeMax){ blocked = `${tgt.type} max $${typeMax} exceeded at ${tgt.desc}`; break; }
-        if(projectedTableTotal + amt > TABLE_MAX){ blocked = `Table max $${TABLE_MAX} exceeded`; break; }
-        posTotals[pk] = cur + amt;
-        projectedTableTotal += amt;
-      }
-      if(blocked){
-        isDraggingStack = false;
-        isDraggingChips = false;
-        window._multiSelectGroupDrag = false;
-        draggedStack = [];
-        stackDragOffset = {x:0, y:0};
-        draggedStackTotalValue = 0;
-        resetCursorAfterStackDragging();
-        drawChipGhosts();
-        showLimitMessage(blocked);
-        return;
-      }
-    }
-    
-    // Apply: for each dragged bet, rewrite type/nums/desc/anchor to the target.
-    // The new multi-selection should track the new bet identities (same objects).
+
     const movedBets = [];
-    draggedStack.forEach((cd, i) => {
-      const tgt = targets[i];
-      cd.bet.type = tgt.type;
-      cd.bet.nums = new Set(tgt.nums);
-      cd.bet.desc = tgt.desc;
-      cd.bet.anchor = {x: tgt.anchor.x, y: tgt.anchor.y};
+    draggedStack.forEach(cd => {
+      const wrapped = _wrapPointToEndlessTable(cd.originalX + dx, cd.originalY + dy);
+      cd.bet.anchor = {x: wrapped.x, y: wrapped.y};
       movedBets.push({bet: cd.bet, fromX: cd.originalX, fromY: cd.originalY, fromType: cd.originalType, fromNums: cd.originalNums, fromDesc: cd.originalDesc});
     });
-    addUndoOperation({ type: 'group_move', movedBets });
-    
+    if(movedBets.length) addUndoOperation({ type: 'group_move', movedBets });
+
     isDraggingStack = false;
     isDraggingChips = false;
     window._multiSelectGroupDrag = false;
@@ -10609,6 +10911,56 @@ function performUndo() {
   refreshWinTooltip();
   return true;
 }
+
+
+// Backtick move mode: drag an empty part of the felt to draw a selection box.
+// Clicking directly on chips still goes to the chip's click handler, and dragging
+// a selected chip still moves the selected group.
+svg.addEventListener('mousedown', (ev) => {
+  if(ev.button !== 0 || !multiSelectMode || spinning || isDraggingStack) return;
+  const start = clientToSvg(ev);
+  if(_isNearAnyBetChip(start.x, start.y, false)) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  clearHover();
+
+  let rect = document.getElementById('multiSelectLassoRect');
+  if(!rect){
+    rect = document.createElementNS(NS, 'rect');
+    rect.setAttribute('id', 'multiSelectLassoRect');
+    rect.setAttribute('fill', 'rgba(255,211,77,0.12)');
+    rect.setAttribute('stroke', '#ffd34d');
+    rect.setAttribute('stroke-width', '3');
+    rect.setAttribute('stroke-dasharray', '10 7');
+    rect.style.filter = 'drop-shadow(0 0 8px rgba(255,211,77,0.9))';
+    rect.style.pointerEvents = 'none';
+    svg.appendChild(rect);
+  }
+  rect.setAttribute('x', start.x);
+  rect.setAttribute('y', start.y);
+  rect.setAttribute('width', 0);
+  rect.setAttribute('height', 0);
+  rect.style.display = 'block';
+
+  const move = (moveEv) => {
+    const cur = clientToSvg(moveEv);
+    rect.setAttribute('x', Math.min(start.x, cur.x));
+    rect.setAttribute('y', Math.min(start.y, cur.y));
+    rect.setAttribute('width', Math.abs(cur.x - start.x));
+    rect.setAttribute('height', Math.abs(cur.y - start.y));
+  };
+  const up = (upEv) => {
+    document.removeEventListener('mousemove', move, true);
+    document.removeEventListener('mouseup', up, true);
+    const end = clientToSvg(upEv);
+    if(rect) rect.style.display = 'none';
+    if(Math.hypot(end.x - start.x, end.y - start.y) > 8){
+      _selectBetsInSvgRect(start.x, start.y, end.x, end.y);
+    }
+  };
+  document.addEventListener('mousemove', move, true);
+  document.addEventListener('mouseup', up, true);
+}, true);
 
 svg.addEventListener('mousedown', (ev) => {
   // ── Multi-select group drag entry ───────────────────────────────────────
@@ -14400,24 +14752,46 @@ function _executeRebet(proposedBets, useCapped, rebetBetsCleared) {
 /* ===== Favorites tip & storage ===== */
 const FAV_KEY='rouletteFav_snap_v3';
 const FAV_SET_KEY = 'rouletteFavSet_v1';
-// Active fav set: 1 = slots 1-3, 2 = slots 4-6, 3 = slots 7-9
+const FAV_SET_COUNT = 5;
+const FAV_SET_THEMES = [
+  { text:'#ffd34d' },
+  { text:'#4dff9a' },
+  { text:'#67d5ff' },
+  { text:'#ff9a3d' },
+  { text:'#f09dff' }
+];
+function _favLabelForSlot(slot){ return 'Fav ' + String.fromCharCode(64 + slot); }
+// Active fav set: 1 = slots 1-3, 2 = slots 4-6, 3 = slots 7-9, 4 = slots 10-12, 5 = slots 13-15
 let activeFavSet = 1;
-try { const s = parseInt(localStorage.getItem(FAV_SET_KEY)); if(s >= 1 && s <= 3) activeFavSet = s; } catch {}
+try { const s = parseInt(localStorage.getItem(FAV_SET_KEY)); if(s >= 1 && s <= FAV_SET_COUNT) activeFavSet = s; } catch {}
 // Map a button index (0,1,2) to the actual storage slot based on active set
 function _favSlotFor(btnIdx){ return (activeFavSet - 1) * 3 + btnIdx + 1; }
 // Update the button labels and switch label to reflect the active set
 function _updateFavSetDisplay(){
   const baseSlot = (activeFavSet - 1) * 3;
+  const theme = FAV_SET_THEMES[activeFavSet - 1] || FAV_SET_THEMES[0];
   for(let i = 0; i < 3; i++){
     const btn = favBtns[i];
-    if(btn) btn.textContent = 'Fav ' + (baseSlot + i + 1);
+    if(btn){
+      btn.textContent = _favLabelForSlot(baseSlot + i + 1);
+      btn.style.removeProperty('background');
+      btn.style.removeProperty('border-color');
+      btn.style.setProperty('color', theme.text, 'important');
+      btn.style.textShadow = 'none';
+    }
   }
   const sw = document.getElementById('favSetSwitch');
-  if(sw) sw.textContent = 'Set ' + activeFavSet;
+  if(sw){
+    sw.textContent = 'Set ' + activeFavSet;
+    sw.title = 'Switch fav set: 1-3 / 4-6 / 7-9 / 10-12 / 13-15';
+    sw.style.removeProperty('background');
+    sw.style.removeProperty('border-color');
+    sw.style.setProperty('color', theme.text, 'important');
+  }
 }
-// Cycle to the next fav set (1 -> 2 -> 3 -> 1)
+// Cycle to the next fav set (1 -> 2 -> 3 -> 4 -> 5 -> 1)
 function cycleFavSet(){
-  activeFavSet = (activeFavSet % 3) + 1;
+  activeFavSet = (activeFavSet % FAV_SET_COUNT) + 1;
   try { localStorage.setItem(FAV_SET_KEY, String(activeFavSet)); } catch {}
   _updateFavSetDisplay();
 }
@@ -14426,8 +14800,12 @@ function cycleFavSet(){
   const sw = document.getElementById('favSetSwitch');
   if(sw){
     sw.addEventListener('click', cycleFavSet);
-    sw.addEventListener('mouseenter', ()=>showButtonTooltip('Switch between fav sets (1-3, 4-6, 7-9)'));
-    sw.addEventListener('mouseleave', hideButtonTooltip);
+    sw.addEventListener('mouseenter', ()=>{
+      showButtonTooltip('Switch between fav sets (1-3, 4-6, 7-9, 10-12, 13-15)');
+    });
+    sw.addEventListener('mouseleave', ()=>{
+      hideButtonTooltip();
+    });
   }
   // Defer initial label sync until favBtns array is populated (next tick is safe)
   setTimeout(_updateFavSetDisplay, 0);
@@ -14458,7 +14836,7 @@ function flashBtn(slot,txt){
     // Restore using the current set's label (in case set changed during flash)
     const curBase = (activeFavSet - 1) * 3;
     const curSlot = curBase + localIdx + 1;
-    b.textContent = 'Fav ' + curSlot;
+    b.textContent = _favLabelForSlot(curSlot);
     b.style.filter = '';
   }, 650);
 }
@@ -14674,6 +15052,17 @@ function refreshFeltCounts(){
   drawDots(document.getElementById('dots-00'), numberCounts['00']||0, dZeroSlot.x, dZeroSlot.y, dZeroSlot.w, dZeroSlot.h);
 }
 
+function setResultBallDelta(ball, delta){
+  if(!ball) return;
+  const deltaEl = ball.querySelector('.rball-delta');
+  if(!deltaEl) return;
+  const amount = Math.round(Number(delta || 0) * 100) / 100;
+  const absText = Math.abs(amount).toLocaleString(undefined, {maximumFractionDigits:2});
+  deltaEl.textContent = amount > 0 ? '+$' + absText : (amount < 0 ? '-$' + absText : '$0');
+  deltaEl.classList.remove('win', 'loss', 'draw');
+  deltaEl.classList.add(amount > 0 ? 'win' : (amount < 0 ? 'loss' : 'draw'));
+}
+
 function pushResultBall(lbl){ 
   allResults.unshift(lbl); 
   
@@ -14714,6 +15103,12 @@ function pushResultBall(lbl){
   }
   
   b.appendChild(dotsContainer);
+
+  // Tiny hover reference: show this spin's plus/minus under the result ball.
+  const deltaSpan = document.createElement('span');
+  deltaSpan.className = 'rball-delta draw';
+  deltaSpan.textContent = '$0';
+  b.appendChild(deltaSpan);
   
   // Add tooltip for the result ball
   b.addEventListener('mouseenter', ()=>showButtonTooltip(`Previous spin result: ${lbl}`));
@@ -14722,6 +15117,7 @@ function pushResultBall(lbl){
   // Store spin index so clicking shows that spin's details
   const spinIdx = rounds.length; // This is the index it will be in rounds array
   b.dataset.spinIdx = spinIdx;
+  if(rounds[spinIdx]) setResultBallDelta(b, rounds[spinIdx].delta);
   b.style.cursor = 'pointer';
   b.addEventListener('click', function(){
     const idx = parseInt(this.dataset.spinIdx);
@@ -17212,57 +17608,44 @@ function positionRail(svgRect, scaleX, scaleY){
   if(!svgRect) svgRect = svg.getBoundingClientRect();
   if(!scaleX) scaleX = svgRect.width / 1800;
   if(!scaleY) scaleY = svgRect.height / 1080;
-  
-  const bottomOfTable = svgRect.bottom; // Position below the entire table
-  const tableLeft = svgRect.left + (originX - 10) * scaleX;
-  const colBoxRight = (originX + cols * cellW + 10 + cellW * 0.6) * scaleX;
-  const tableRight = svgRect.left + colBoxRight;
 
-  // Mobile: use absolute positioning so rail scrolls with the page
-  var isMob = window.innerWidth <= 768 || window.innerHeight <= 600;
-  if(isMob){
-    var cardRect = card.getBoundingClientRect();
-    var railTopAbs = (bottomOfTable - cardRect.top) + 8; // 8px below table
-    var railLeftAbs = svgRect.left - cardRect.left + (originX - 10) * scaleX;
-    var railRightAbs = (cardRect.right - tableRight);
-    var railW = tableRight - tableLeft;
+  // Anchor the rail to the exact outside-bet row:
+  // 1-18 / EVEN / RED / BLACK / ODD / 19-36.
+  // These constants already exist in the table drawing code.
+  const outsideRowTopSvg = (typeof evenY !== 'undefined') ? evenY : (originY + rows*cellH + 26 + 56);
+  const outsideRowBottomSvg = outsideRowTopSvg + ((typeof evenH !== 'undefined') ? evenH : 56);
+  const railTop = svgRect.top + (outsideRowBottomSvg * scaleY) + 4;
 
-    rail.style.position = 'absolute';
-    rail.style.top = railTopAbs + 'px';
-    rail.style.left = railLeftAbs + 'px';
-    rail.style.right = Math.max(0, railRightAbs) + 'px';
-    rail.style.transform = 'none';
-    rail.style.maxWidth = railW + 'px';
-    rail.style.overflow = 'hidden';
-    rail.style.gap = '1px';
-    var ballSize = Math.max(14, Math.min(20, railW / 22));
-    rail.querySelectorAll('.rball').forEach(function(b){
-      b.style.width = ballSize + 'px';
-      b.style.height = ballSize + 'px';
-      b.style.minWidth = ballSize + 'px';
-      var num = b.querySelector('.rball-number');
-      if(num) num.style.fontSize = Math.max(7, ballSize * 0.5) + 'px';
-      var dots = b.querySelector('.rball-dots');
-      if(dots) dots.style.display = 'none';
-    });
-  } else {
-    // Desktop: fixed position - below the table
-    var railTop = bottomOfTable + 8; // 8px below table
-    rail.style.position = 'fixed';
-    rail.style.top = railTop + 'px';
-    rail.style.left = tableLeft + 'px';
-    rail.style.right = (window.innerWidth - tableRight) + 'px';
-    rail.style.transform = 'none';
-    rail.style.maxWidth = 'none';
-    rail.style.overflow = 'visible';
-    rail.style.gap = '3px';
-    rail.style.zIndex = '5000'; // Ensure rail stays below chart but above other elements
-  }
-  
-  // Position hints below the rail
-  positionSoulmanHints(bottomOfTable + 40, tableLeft, tableRight);
+  const tableLeft = svgRect.left + (originX * scaleX);
+  const tableRight = svgRect.left + ((originX + cols * cellW) * scaleX);
+  const railWidth = Math.max(240, tableRight - tableLeft);
+  const railLeft = tableLeft;
+
+  // Keep it fixed to the viewport so it is always visible while playing,
+  // but line it up under the outside bets instead of under the whole SVG.
+  rail.style.setProperty('position', 'fixed', 'important');
+  rail.style.setProperty('top', Math.round(railTop) + 'px', 'important');
+  rail.style.setProperty('left', Math.round(railLeft) + 'px', 'important');
+  rail.style.setProperty('right', 'auto', 'important');
+  rail.style.setProperty('width', Math.round(railWidth) + 'px', 'important');
+  rail.style.setProperty('max-width', 'calc(100vw - 16px)', 'important');
+  rail.style.setProperty('transform', 'none', 'important');
+  rail.style.setProperty('overflow', 'visible', 'important');
+  rail.style.setProperty('z-index', '2147483000', 'important');
+
+  // If the table is scaled very small, shrink older balls so the rail stays tidy.
+  const ballSize = Math.max(18, Math.min(28, railWidth / 30));
+  rail.querySelectorAll('.rball:not(.most-recent)').forEach(function(b){
+    b.style.setProperty('width', ballSize + 'px', 'important');
+    b.style.setProperty('height', ballSize + 'px', 'important');
+    b.style.setProperty('min-width', ballSize + 'px', 'important');
+    var num = b.querySelector('.rball-number');
+    if(num) num.style.setProperty('font-size', Math.max(8, ballSize * 0.42) + 'px', 'important');
+  });
+
+  // Hints should sit below the result balls, not over the outside bets.
+  positionSoulmanHints(railTop + 40, tableLeft, tableRight);
 }
-
 function positionSoulmanHints() { /* hint button positions itself */ }
 window.addEventListener('resize', positionToolbar);
 window.addEventListener('resize', ()=> positionRail());
@@ -17394,7 +17777,8 @@ function applyColorTheme(themeName) {
     document.head.appendChild(themeStyle);
   }
   themeStyle.textContent = `
-    .card::after { background: ${t.cardBg} !important; border-color: ${t.gold} !important; }
+    .card::after { background:#000 !important; border-color:${t.gold} !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+    .card-side-fill { background:#000 !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
     .chartPanel { background: ${t.chartBg} !important; border-color: ${t.gold}40 !important; }
     .fixed-bank-container .stat-pill,
     .fixed-stake-container .stat-pill,
@@ -20484,6 +20868,9 @@ function startActualGame() {
   // Show game
   wrap.style.display = 'block';
   var ss = document.getElementById('statsSection'); if(ss) ss.style.display = 'block';
+  setTimeout(() => {
+    if(typeof showFirstBetTrayPullHint === 'function') showFirstBetTrayPullHint(true);
+  }, 900);
   
   // Show other game elements
   const wheelWrapper = document.querySelector('.fixed-wheel-scale-wrapper');
@@ -21405,6 +21792,12 @@ window.addEventListener('resize', positionToolbar);
   // Build floater
   const floater = document.createElement('div');
   floater.className = 'cursor-chip-clean';
+  floater.style.display = 'none';
+  floater.style.visibility = 'hidden';
+  floater.style.opacity = '0';
+  floater.style.display = 'none';
+  floater.style.visibility = 'hidden';
+  floater.style.opacity = '0';
   const floaterImg = document.createElement('img');
   floaterImg.alt = 'chip';
   floater.appendChild(floaterImg);
@@ -21460,10 +21853,8 @@ window.addEventListener('resize', positionToolbar);
 
   // Mouse/Touch
   function show(x,y) {
-    if (!selectedSrc) { floater.style.display='none'; return; }
-    floater.style.left = x + 'px';
-    floater.style.top  = y + 'px';
     floater.style.display = 'block';
+    floater.style.display = 'none';
   }
   function hide() { floater.style.display = 'none'; }
 
@@ -21582,10 +21973,7 @@ window.addEventListener('resize', positionToolbar);
 
   // ---- follower visibility ----
   function show(x,y) {
-    if (!gameReady || !selectedSrc) { floater.style.display = 'none'; return; }
-    floater.style.left = x + 'px';
-    floater.style.top  = y + 'px';
-    floater.style.display = 'block';
+    floater.style.display = 'none';
   }
   function hide() { floater.style.display = 'none'; }
 
@@ -22576,7 +22964,7 @@ window.quickResetBankroll = function(){
 
   // Keyboard S shortcut
   document.addEventListener('keydown',function(e){
-    if((e.key==='s'||e.key==='S')&&!e.ctrlKey&&!e.metaKey){
+    if((e.key === '9'||e.key === '9')&&!e.ctrlKey&&!e.metaKey){
       var tag=(document.activeElement||{}).tagName||'';
       if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
       if(modal.classList.contains('show')){modal.classList.remove('show');restoreAll();}
@@ -23232,6 +23620,7 @@ window.quickResetBankroll = function(){
   function initRotateOverlay(){
     const overlay = document.getElementById('soulmanRotateOverlay');
     if(!overlay) return;
+    const SIDE_MODE_KEY = 'soulmanSideModeSet_v1';
 
     // Detect actual smartphone (not tablet, not desktop with touch)
     const ua = navigator.userAgent;
@@ -23246,6 +23635,14 @@ window.quickResetBankroll = function(){
       return;
     }
 
+    try {
+      if(localStorage.getItem(SIDE_MODE_KEY)){
+        overlay.classList.remove('show');
+        console.log('Soulman: Rotate overlay skipped (side mode already set)');
+        return;
+      }
+    } catch {}
+
     let checkTimer = null;
     let lastState = null; // tracks last applied show/hide so we never write the same state twice
 
@@ -23258,7 +23655,20 @@ window.quickResetBankroll = function(){
       return window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
     }
 
+    function markSideModeSet(){
+      try { localStorage.setItem(SIDE_MODE_KEY, '1'); } catch {}
+      overlay.classList.remove('show');
+      lastState = false;
+    }
+
+    overlay.addEventListener('click', markSideModeSet);
+    overlay.addEventListener('touchend', markSideModeSet, {passive:true});
+
     function applyState(shouldShow){
+      if(!shouldShow){
+        markSideModeSet();
+        return;
+      }
       // Idempotent — skip redundant DOM writes (no flicker, no extra repaints)
       if(shouldShow === lastState) return;
       lastState = shouldShow;
@@ -23274,7 +23684,7 @@ window.quickResetBankroll = function(){
       checkTimer = setTimeout(()=>{
         checkTimer = null;
         applyState(getOrientation() === 'portrait');
-      }, 250);
+      }, 650);
     }
 
     // Initial check on load (small delay so layout has settled)
@@ -23305,6 +23715,7 @@ window.quickResetBankroll = function(){
     if(window.innerWidth > 900 && window.innerHeight > 900) return;
     
     const felt = document.getElementById('felt');
+    const svgEl = document.getElementById('feltSvg') || document.querySelector('#felt svg');
     const chipsContainer = document.querySelector('.fixed-chips-container');
     const controlsContainer = document.querySelector('.fixed-controls-container');
     
@@ -23323,6 +23734,8 @@ window.quickResetBankroll = function(){
     const card = document.getElementById('card');
     if(wrap) wrap.style.touchAction = 'pan-x pan-y';
     if(card) card.style.touchAction = 'pan-x pan-y';
+    if(felt) felt.style.touchAction = 'pan-x pan-y';
+    if(svgEl) svgEl.style.touchAction = 'pan-x pan-y';
     
     // Make sure body allows scrolling on mobile
     document.body.style.touchAction = 'pan-x pan-y';
@@ -23601,5 +24014,238 @@ window.bigWinFire = (function(){
 })();
 
 </script>
+
+<script>
+/* Lucky Streak Patch: glow grows on consecutive hits and resets on loss */
+(function(){
+  if (window.__luckyStreakPatchInstalled) return;
+  window.__luckyStreakPatchInstalled = true;
+
+  var luckyStreak = 0;
+  var luckyHits = [];
+
+  function rouletteColor(n){
+    n = Number(n);
+    if (n === 0) return 'green';
+    var red = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+    return red.has(n) ? 'red' : 'black';
+  }
+
+  function ensureLuckyRow(){
+    var row = document.getElementById('luckyHitsRow');
+    if (!row) {
+      row = document.createElement('div');
+      row.id = 'luckyHitsRow';
+      row.className = 'luckyHitsRow';
+      var rail = document.querySelector('.rail');
+      if (rail && rail.parentNode) rail.parentNode.insertBefore(row, rail.nextSibling);
+      else document.body.appendChild(row);
+    }
+    return row;
+  }
+
+  function renderLuckyHits(){
+    var row = ensureLuckyRow();
+    if (!luckyStreak) {
+      row.innerHTML = '<span class="luckyHitsLabel">HITS RESET</span>';
+      row.style.opacity = '0.75';
+      return;
+    }
+    row.style.opacity = '1';
+    var html = '<span class="luckyHitsLabel">HIT STREAK x' + luckyStreak + '</span>';
+    luckyHits.slice(-18).forEach(function(n){
+      html += '<span class="luckyHitPip ' + rouletteColor(n) + '">' + n + '</span>';
+    });
+    row.innerHTML = html;
+  }
+
+  function applyLuckyGlow(){
+    var level = Math.min(luckyStreak, 12);
+    var alpha = luckyStreak ? Math.min(0.18 + luckyStreak * 0.075, 0.95) : 0;
+    document.documentElement.style.setProperty('--luckyGlowLevel', String(level));
+    document.documentElement.style.setProperty('--luckyGlowAlpha', String(alpha));
+
+    var targets = [
+      document.querySelector('.card'),
+      document.getElementById('felt'),
+      document.getElementById('feltSvg'),
+      document.querySelector('#felt svg')
+    ].filter(Boolean);
+
+    targets.forEach(function(el){
+      if (luckyStreak) el.classList.add('lucky-streak-glow');
+      else el.classList.remove('lucky-streak-glow');
+    });
+  }
+
+  window.SoulmanLuckyStreak = {
+    hit:function(number){
+      luckyStreak += 1;
+      luckyHits.push(number);
+      if (luckyHits.length > 36) luckyHits.shift();
+      applyLuckyGlow();
+      renderLuckyHits();
+    },
+    loss:function(){
+      luckyStreak = 0;
+      luckyHits = [];
+      applyLuckyGlow();
+      renderLuckyHits();
+    },
+    reset:function(){
+      luckyStreak = 0;
+      luckyHits = [];
+      applyLuckyGlow();
+      renderLuckyHits();
+    },
+    get:function(){ return {streak:luckyStreak, hits:luckyHits.slice()}; }
+  };
+
+  function inferLatestResultNumber(){
+    var recent = document.querySelector('.rball.most-recent .rball-number') || document.querySelector('.rball.most-recent');
+    if (recent) {
+      var m = (recent.textContent || '').match(/\d+/);
+      if (m) return Number(m[0]);
+    }
+    return '';
+  }
+
+  function watchWinLossBanners(){
+    var banner = document.querySelector('.banner');
+    if (!banner) return;
+    var observer = new MutationObserver(function(){
+      if (!banner.classList.contains('show')) return;
+      var txt = (banner.textContent || '').toLowerCase();
+      var isWin = banner.classList.contains('win') || /\bwin\b|\bhit\b|paid|payout/.test(txt);
+      var isLoss = banner.classList.contains('loss') || /\bloss\b|\blose\b|lost|no win/.test(txt);
+      if (isWin) window.SoulmanLuckyStreak.hit(inferLatestResultNumber());
+      else if (isLoss) window.SoulmanLuckyStreak.loss();
+    });
+    observer.observe(banner, {attributes:true, childList:true, subtree:true, characterData:true});
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ renderLuckyHits(); watchWinLossBanners(); });
+  } else {
+    renderLuckyHits();
+    watchWinLossBanners();
+  }
+})();
+</script>
+
+
+<script>
+(function(){
+  function enablePlus1000(){
+    const btns = Array.from(document.querySelectorAll('button,.btn'));
+    btns.forEach(btn=>{
+      const txt = (btn.textContent || '').replace(/\s+/g,' ').trim();
+      if(txt.includes('+1000') || txt.includes('+ 1000')){
+        btn.disabled = false;
+        btn.style.display = '';
+        btn.style.opacity = '1';
+        btn.dataset.strictBypass = 'true';
+      }
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', enablePlus1000);
+  } else {
+    enablePlus1000();
+  }
+  setInterval(enablePlus1000, 1000);
+})();
+</script>
+
+
+<script>
+(function(){
+  function interceptSettingsShortcut(e){
+    const k = (e.key || '').toLowerCase();
+
+    // Kill S shortcut for settings
+    if(k === 's'){
+      e.stopImmediatePropagation();
+      return;
+    }
+
+    // 9 opens settings
+    if(k === '9'){
+      const btn =
+        document.querySelector('.settings-button') ||
+        document.getElementById('settingsButton') ||
+        document.querySelector('[data-settings]');
+
+      if(btn){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        btn.click();
+      }
+    }
+  }
+
+  window.addEventListener('keydown', interceptSettingsShortcut, true);
+})();
+</script>
+
+<style>
+  html,
+  body,
+  .wrap {
+    background:#000 !important;
+  }
+  .card::after,
+  .card-side-fill {
+    background:#000 !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  .card::before {
+    top:65px !important;
+    left:-2px !important;
+    right:-2px !important;
+    bottom:-2px !important;
+    border-radius:18px 18px 0 0 !important;
+  }
+  /* Final no-movement/no-cursor overrides */
+  #favSetSwitch,
+  #favSetSwitch:hover,
+  #favSetSwitch:active,
+  .fixed-controls-container .favBtn,
+  .fixed-controls-container .favBtn:hover,
+  .fixed-controls-container .favBtn:active,
+  .fixed-controls-container .favBtn.clicked,
+  .fixed-controls-container .favBtn.clicked:hover {
+    width:52px !important;
+    min-width:52px !important;
+    max-width:52px !important;
+    transform:none !important;
+    animation:none !important;
+    transition:color 0.1s, background 0.1s, border-color 0.1s !important;
+    box-sizing:border-box !important;
+  }
+  #favSetSwitch,
+  #favSetSwitch:hover,
+  #favSetSwitch:active {
+    width:22px !important;
+    min-width:22px !important;
+    max-width:22px !important;
+  }
+  #chipCursorFollower,
+  #chipCursorFollower.show,
+  #chipCursorFollower *,
+  #handChip,
+  #handChip.show,
+  #handChip *,
+  .cursor-chip-clean,
+  .cursor-chip-clean *,
+  #dragGhostContainer,
+  #dragGhostContainer * {
+    display:none !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+</style>
 </body>
 </html>
