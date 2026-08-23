@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "http-server -p 8000 --host 0.0.0.0"
+    "dev": "http-server -p 8000 --host 0.0.0.0",
+    "ithaca": "node ithaca-explorer/server.js"
   },
   "keywords": [],
   "author": "",

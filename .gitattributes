@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Keep the large local video available without exceeding GitHub's file limit.
+assets/tvglitch.mp4 filter=lfs diff=lfs merge=lfs -text

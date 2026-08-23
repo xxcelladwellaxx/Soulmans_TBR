@@ -74,33 +74,6 @@
       .zoom-in-95 {
         animation-name: zoom-in-95;
       }
-      @keyframes soulman-preview-result-hit {
-        0% {
-          background-color: #fde047;
-          color: #111827;
-          box-shadow:
-            inset 0 0 0 3px #fff,
-            0 0 30px 10px rgba(250, 204, 21, 0.95);
-          transform: scale(1.1);
-        }
-        35% {
-          background-color: rgba(250, 204, 21, 0.82);
-          box-shadow:
-            inset 0 0 0 2px rgba(255, 255, 255, 0.85),
-            0 0 22px 6px rgba(250, 204, 21, 0.65);
-          transform: scale(1.04);
-        }
-        100% {
-          background-color: rgba(250, 204, 21, 0);
-          box-shadow: none;
-          transform: scale(1);
-        }
-      }
-      .soulman-preview-result-flash {
-        position: relative;
-        z-index: 40 !important;
-        animation: soulman-preview-result-hit 2.2s ease-out;
-      }
     </style>
   </head>
   <body>
@@ -977,22 +950,18 @@
           },
         };
 
-        // Inject / update in user presets, and repair the preset vault if old/corrupt data is stored.
+        // Inject / update in user presets
         try {
           var existing = [];
           var raw = localStorage.getItem(STORAGE_KEY);
           if (raw) {
-            try {
-              var parsed = JSON.parse(raw);
-              existing = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
-            } catch (parseError) {
-              console.warn("[BOMBAY] Preset vault was corrupt; rebuilding it.", parseError);
-              existing = [];
-            }
+            existing = JSON.parse(raw);
           }
-          existing = existing.filter(function (p) { return p && typeof p === "object"; });
+          if (!Array.isArray(existing)) {
+            existing = [];
+          }
           var found = existing.some(function (p) {
-            return p.id === BOMBAY_ID || (p.data && p.data.id === bombayPreset.data.id) || p.name === bombayPreset.name;
+            return p.id === BOMBAY_ID;
           });
           if (!found) {
             existing.unshift(bombayPreset);
@@ -1001,7 +970,7 @@
           } else {
             // Always overwrite with latest schema
             for (var i = 0; i < existing.length; i++) {
-              if (existing[i] && (existing[i].id === BOMBAY_ID || (existing[i].data && existing[i].data.id === bombayPreset.data.id) || existing[i].name === bombayPreset.name)) {
+              if (existing[i].id === BOMBAY_ID) {
                 existing[i] = bombayPreset;
                 break;
               }
@@ -1010,285 +979,14 @@
             console.log("[BOMBAY] v2 preset updated in builder.");
           }
         } catch (e) {
+          console.warn("[BOMBAY] Could not inject preset:", e);
           try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify([bombayPreset]));
             console.log("[BOMBAY] preset vault repaired and preset injected.");
           } catch (repairError) {
-            console.warn("[BOMBAY] Could not inject preset:", e, repairError);
+            console.warn("[BOMBAY] Could not repair preset vault:", repairError);
           }
         }
-      })();
-    </script>
-
-    <script type="application/json" id="soulman-presets-early-opener-disabled">
-      (function(){
-        "use strict";
-        if (window.__SOULMAN_PRESETS_HARD_FIX__) return;
-        window.__SOULMAN_PRESETS_HARD_FIX__ = true;
-
-        var PANEL_ID = "soulmanPresetHardPanel";
-        var BACKDROP_ID = "soulmanPresetHardBackdrop";
-        var BUTTON_ID = "soulmanPresetHardButton";
-        var STORAGE_KEY = "phantom_user_presets";
-        var retryTimer = null;
-        var lastOpenAt = 0;
-
-        function css(el, styles) {
-          for (var k in styles) if (Object.prototype.hasOwnProperty.call(styles, k)) el.style[k] = styles[k];
-          return el;
-        }
-        function node(tag, text) {
-          var el = document.createElement(tag);
-          if (text != null) el.textContent = text;
-          return el;
-        }
-        function safeText(value) {
-          return String(value == null ? "" : value).replace(/[&<>\"]/g, function(ch){
-            return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch] || ch;
-          });
-        }
-        function api() { return window.PhantomPresetAPI || null; }
-        function normalizeVault(value) {
-          var list = Array.isArray(value) ? value : (value && typeof value === "object" ? [value] : []);
-          return list.filter(function(p){ return p && typeof p === "object"; }).map(function(p, index){
-            if (p.data && (p.data.lanes || p.data.settings || p.data.rules)) {
-              if (!p.id) p.id = "preset_repaired_" + index;
-              if (!p.name) p.name = (p.data && p.data.name) || "Recovered Preset";
-              return p;
-            }
-            if (p.lanes || p.settings || p.rules) {
-              return {
-                id: p.id || "preset_repaired_direct_" + index,
-                name: p.name || "Recovered Preset",
-                builtIn: !!p.builtIn,
-                data: p
-              };
-            }
-            return null;
-          }).filter(Boolean);
-        }
-        function readStoragePresets() {
-          try {
-            var raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) return [];
-            var list = normalizeVault(JSON.parse(raw));
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-            return list;
-          } catch (e) {
-            console.warn("[Soulman Presets] preset vault repair failed", e);
-            try { localStorage.removeItem(STORAGE_KEY); } catch(err) {}
-            return [];
-          }
-        }
-        function getPresets() {
-          var live = api();
-          var list = [];
-          try {
-            if (live && typeof live.getPresets === "function") list = normalizeVault(live.getPresets() || []);
-          } catch(e) { list = []; }
-          var byId = {};
-          list.concat(readStoragePresets()).forEach(function(p){
-            var id = (p && (p.id || (p.data && p.data.id) || p.name)) || ("preset_" + Math.random());
-            if (p && !byId[id]) byId[id] = p;
-          });
-          return Object.keys(byId).map(function(id){ return byId[id]; });
-        }
-        function presetName(p) { return (p && (p.name || (p.data && p.data.name))) || "Unnamed Preset"; }
-        function removePanel() {
-          var p = document.getElementById(PANEL_ID); if (p) p.remove();
-          var b = document.getElementById(BACKDROP_ID); if (b) b.remove();
-          if (retryTimer) { clearInterval(retryTimer); retryTimer = null; }
-        }
-        function toast(message) {
-          var old = document.getElementById("soulmanPresetToast"); if (old) old.remove();
-          var t = css(node("div", message), {
-            position:"fixed", left:"50%", top:"18px", transform:"translateX(-50%)", zIndex:"2147483647",
-            background:"rgba(15,23,42,.96)", color:"#fcd34d", border:"1px solid rgba(251,191,36,.35)",
-            borderRadius:"999px", padding:"8px 12px", font:"900 11px system-ui,-apple-system,sans-serif", letterSpacing:".08em",
-            boxShadow:"0 14px 40px rgba(0,0,0,.55)", pointerEvents:"none", textTransform:"uppercase"
-          });
-          t.id = "soulmanPresetToast";
-          document.body.appendChild(t);
-          setTimeout(function(){ try { t.remove(); } catch(e){} }, 1600);
-        }
-        function refreshOriginalButtons() {
-          try {
-            document.querySelectorAll("button").forEach(function(btn){
-              var txt = (btn.textContent || "").replace(/\s+/g," ").trim().toUpperCase();
-              var title = (btn.getAttribute("title") || "").toUpperCase();
-              if (txt === "PRESETS" || /(^|\s)PRESETS($|\s)/.test(txt) || title.indexOf("PRESET") >= 0) {
-                btn.disabled = false;
-                btn.style.pointerEvents = "auto";
-                btn.setAttribute("data-soulman-presets-fixed", "1");
-              }
-            });
-          } catch(e) {}
-        }
-        function loadPreset(preset) {
-          var live = api();
-          if (!live || typeof live.loadPreset !== "function") {
-            toast("Preset engine is still loading");
-            return;
-          }
-          try {
-            live.loadPreset(preset);
-            removePanel();
-            toast("Preset loaded: " + presetName(preset));
-          } catch (e) {
-            console.error("[Soulman Presets] load failed", e);
-            alert("Could not load that preset. Stop any running test, refresh, then try again.");
-          }
-        }
-        function renderList(listEl) {
-          listEl.innerHTML = "";
-          var liveReady = !!(api() && typeof api().loadPreset === "function");
-          var presets = getPresets();
-          if (!liveReady) {
-            listEl.appendChild(css(node("div", "Preset engine is loading. This panel will refresh automatically."), {
-              padding:"14px", textAlign:"center", color:"#cbd5e1", fontSize:"12px", fontWeight:"700", lineHeight:"1.35"
-            }));
-          }
-          if (!presets.length) {
-            listEl.appendChild(css(node("div", "No presets found yet."), {
-              padding:"18px", textAlign:"center", color:"#94a3b8", fontSize:"11px", fontWeight:"900", letterSpacing:".08em", textTransform:"uppercase"
-            }));
-            return;
-          }
-          presets.forEach(function(preset){
-            var row = css(document.createElement("div"), {display:"flex", alignItems:"stretch", gap:"6px", marginBottom:"6px"});
-            var btn = css(document.createElement("button"), {
-              flex:"1", textAlign:"left", padding:"11px", borderRadius:"12px", border:"1px solid rgba(255,255,255,.10)",
-              background:"rgba(255,255,255,.055)", color:"#e2e8f0", cursor:"pointer", minHeight:"48px", pointerEvents:"auto"
-            });
-            btn.innerHTML = '<div style="font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + safeText(presetName(preset)) + '</div>' +
-              '<div style="font-size:8px;font-weight:900;letter-spacing:.14em;color:' + (preset && preset.builtIn ? '#f59e0b' : '#818cf8') + ';margin-top:3px;text-transform:uppercase;">' + (preset && preset.builtIn ? 'Built-in' : 'Custom') + '</div>';
-            function choosePreset(e) {
-              if (e) { e.preventDefault(); e.stopPropagation(); }
-              if (btn.__soulmanChoosingPreset) return;
-              btn.__soulmanChoosingPreset = true;
-              setTimeout(function(){ btn.__soulmanChoosingPreset = false; }, 350);
-              loadPreset(preset);
-            }
-            btn.onclick = choosePreset;
-            btn.addEventListener("click", choosePreset, true);
-            btn.addEventListener("pointerup", choosePreset, true);
-            row.appendChild(btn);
-            listEl.appendChild(row);
-          });
-        }
-        function showPanel(evt) {
-          if (evt) {
-            try { evt.preventDefault(); evt.stopPropagation(); if (evt.stopImmediatePropagation) evt.stopImmediatePropagation(); } catch(e) {}
-          }
-          lastOpenAt = Date.now();
-          removePanel();
-          refreshOriginalButtons();
-          var backdrop = css(document.createElement("div"), {
-            position:"fixed", left:"0", top:"0", right:"0", bottom:"0", zIndex:"2147483645", background:"rgba(0,0,0,.22)", pointerEvents:"auto"
-          });
-          backdrop.id = BACKDROP_ID;
-          backdrop.addEventListener("click", function(e){
-            if (Date.now() - lastOpenAt < 450) { e.preventDefault(); e.stopPropagation(); return; }
-            removePanel();
-          }, true);
-          var panel = css(document.createElement("div"), {
-            position:"fixed", top:"58px", right:"12px", width:"min(94vw, 410px)", maxHeight:"82vh", overflow:"hidden",
-            zIndex:"2147483647", background:"#0f172a", color:"#fff", border:"1px solid rgba(251,191,36,.22)",
-            borderRadius:"18px", boxShadow:"0 28px 90px rgba(0,0,0,.78)", fontFamily:"system-ui,-apple-system,sans-serif", pointerEvents:"auto"
-          });
-          panel.id = PANEL_ID;
-          panel.addEventListener("click", function(e){ e.stopPropagation(); }, true);
-          var head = css(document.createElement("div"), {display:"flex", alignItems:"center", justifyContent:"space-between", gap:"8px", padding:"11px 12px", borderBottom:"1px solid rgba(255,255,255,.08)", background:"rgba(251,191,36,.06)"});
-          var title = css(node("div", "STRATEGY PRESETS"), {fontSize:"11px", fontWeight:"1000", color:"#fbbf24", letterSpacing:".13em"});
-          var close = css(node("button", "x"), {background:"transparent", border:"0", color:"#cbd5e1", fontSize:"18px", cursor:"pointer", padding:"2px 6px"});
-          close.addEventListener("click", removePanel, true);
-          head.appendChild(title); head.appendChild(close); panel.appendChild(head);
-          var list = css(document.createElement("div"), {maxHeight:"calc(82vh - 126px)", overflowY:"auto", padding:"8px"});
-          panel.appendChild(list);
-          var foot = css(document.createElement("div"), {borderTop:"1px solid rgba(255,255,255,.08)", padding:"8px", display:"flex", gap:"8px", background:"rgba(0,0,0,.22)"});
-          var save = css(node("button", "+ SAVE CURRENT"), {flex:"1", padding:"10px", borderRadius:"12px", border:"1px solid rgba(251,191,36,.24)", background:"rgba(251,191,36,.10)", color:"#fcd34d", cursor:"pointer", fontSize:"10px", fontWeight:"900", letterSpacing:".1em"});
-          save.addEventListener("click", function(e){
-            e.preventDefault(); e.stopPropagation();
-            var live = api();
-            if (!live || typeof live.saveAsPreset !== "function") return alert("Preset engine is still starting.");
-            var name = prompt("Preset name:", "Soulman Preset");
-            if (name && name.trim()) {
-              try { live.saveAsPreset(name.trim()); setTimeout(function(){ renderList(list); }, 80); } catch(err) { alert("Could not save preset."); }
-            }
-          }, true);
-          var reload = css(node("button", "REF"), {width:"46px", padding:"10px", borderRadius:"12px", border:"1px solid rgba(255,255,255,.12)", background:"rgba(255,255,255,.055)", color:"#fff", cursor:"pointer", fontSize:"10px", fontWeight:"900"});
-          reload.title = "Refresh preset list";
-          reload.addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); var live = api(); try { live && live.refreshPresets && live.refreshPresets(); } catch(err){} setTimeout(function(){ renderList(list); }, 120); }, true);
-          foot.appendChild(save); foot.appendChild(reload); panel.appendChild(foot);
-          document.body.appendChild(backdrop);
-          document.body.appendChild(panel);
-          renderList(list);
-          var tries = 0;
-          retryTimer = setInterval(function(){
-            tries++;
-            if (!document.getElementById(PANEL_ID)) { clearInterval(retryTimer); retryTimer = null; return; }
-            renderList(list);
-            if (api() && typeof api().loadPreset === "function" && tries > 2) { clearInterval(retryTimer); retryTimer = null; }
-            if (tries > 40) { clearInterval(retryTimer); retryTimer = null; }
-          }, 500);
-        }
-        function makeFloatingButton() {
-          var existing = document.getElementById(BUTTON_ID);
-          if (existing) {
-            existing.disabled = false;
-            existing.style.setProperty("display", "block", "important");
-            existing.style.setProperty("visibility", "visible", "important");
-            existing.style.setProperty("opacity", "1", "important");
-            existing.style.setProperty("pointer-events", "auto", "important");
-            existing.style.setProperty("z-index", "2147483647", "important");
-            return;
-          }
-          var btn = css(node("button", "PRESETS"), {
-            position:"fixed", right:"12px", top:"10px", zIndex:"2147483647", pointerEvents:"auto",
-            border:"1px solid rgba(251,191,36,.45)", background:"linear-gradient(180deg, rgba(146,64,14,.98), rgba(92,47,8,.98))",
-            color:"#fff7ed", borderRadius:"999px", padding:"9px 13px", font:"1000 11px system-ui,-apple-system,sans-serif",
-            letterSpacing:".09em", boxShadow:"0 14px 38px rgba(0,0,0,.65)", cursor:"pointer", textTransform:"uppercase"
-          });
-          btn.id = BUTTON_ID;
-          btn.title = "Open Strategy Presets";
-          ["pointerdown", "mousedown", "touchstart", "click"].forEach(function(type){
-            btn.addEventListener(type, function(e){ showPanel(e); }, true);
-          });
-          document.body.appendChild(btn);
-        }
-        function shouldOpenFromEvent(e) {
-          var target = e && e.target;
-          if (!target) return false;
-          if (target.closest && (target.closest("#" + PANEL_ID) || target.closest("#" + BUTTON_ID))) return false;
-          var btn = target.closest ? target.closest("button, [role='button'], a") : null;
-          if (!btn) return false;
-          var txt = (btn.textContent || "").replace(/\s+/g," ").trim().toUpperCase();
-          var title = (btn.getAttribute && (btn.getAttribute("title") || "").toUpperCase()) || "";
-          return txt === "PRESETS" || /(^|\s)PRESETS($|\s)/.test(txt) || title.indexOf("PRESET") >= 0 || btn.getAttribute("data-soulman-presets-fixed") === "1";
-        }
-        function boot() {
-          refreshOriginalButtons();
-          makeFloatingButton();
-        }
-        if (document.body) boot();
-        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-        else boot();
-        ["pointerdown", "mousedown", "touchstart", "click"].forEach(function(type){
-          document.addEventListener(type, function(e){ if (shouldOpenFromEvent(e)) showPanel(e); }, true);
-        });
-        window.addEventListener("keydown", function(e){
-          if ((e.key || "").toLowerCase() === "p" && (e.shiftKey || e.altKey || e.ctrlKey)) showPanel(e);
-        }, true);
-        window.addEventListener("message", function(e){
-          var data = e && e.data;
-          var shouldOpen = data === "open-soulman-presets" || !!(data && typeof data === "object" && (data.type === "open-soulman-presets" || data.action === "open-soulman-presets"));
-          if (shouldOpen) showPanel(e);
-        }, false);
-        setInterval(function(){ refreshOriginalButtons(); makeFloatingButton(); }, 1000);
-        window.showSoulmanPresetPanel = showPanel;
-        window.closeSoulmanPresetPanel = removePanel;
-        window.SoulmanPresetFix = { showPanel: showPanel, getPresets: getPresets, normalizeVault: normalizeVault, readStoragePresets: readStoragePresets };
-        console.log("[Soulman Presets] early opener loaded.");
       })();
     </script>
 
@@ -15396,33 +15094,7 @@ Error generating stack: ` +
                   amount: h(x.amount * s.multiplier, x.placement.type),
                 }),
               );
-            else if (s.config.strategyMode === "BLACK_WINNER_PEELER") {
-              const x = new Set(s.eliminatedBetIds || []);
-              if (s.blackPeelerSitOut) {
-                const w = n[n.length - 1],
-                  _ = w && w.result ? w.result.value : void 0;
-                if (w && !Jr.includes(_)) {
-                  s.blackPeelerSitOut = !1;
-                  if (s.blackPeelerPendingRedIncrease) {
-                    s.blackPeelerLossUnits =
-                      (s.blackPeelerLossUnits || 0) +
-                      (s.config.blackPeelerLossUnit || 1);
-                    s.blackPeelerPendingRedIncrease = !1;
-                  }
-                  f.push("Red run cleared: +$1 to every active bet");
-                } else f.push("Red protection: observation spin");
-              }
-              if (!s.blackPeelerSitOut) {
-                const w = Math.max(0, Number(s.blackPeelerLossUnits) || 0);
-                s.bets.forEach((_) => {
-                  !x.has(_.id) &&
-                    c.push({
-                      ..._,
-                      amount: h(_.amount + w, _.placement.type),
-                    });
-                });
-              }
-            } else if (s.config.strategyMode === "ELIMINATION") {
+            else if (s.config.strategyMode === "ELIMINATION") {
               const x = new Set(s.eliminatedBetIds || []),
                 w = new Set(s.eliminationPausedIds || []),
                 _ = s.config.eliminationProgression;
@@ -15465,54 +15137,6 @@ Error generating stack: ` +
                     }),
                   );
               }
-            } else if (s.config.strategyMode === "MONEY_SLIDE") {
-              const x = s.moneySlideStep || 0,
-                w = Math.min(12, x + 1),
-                _ = x + 1,
-                A = s.config.moneySlideZeroSplit === !0,
-                S = A ? _ : x + 3,
-                E = [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
-                j = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35];
-              A
-                ? c.push({
-                    id: `${s.id}-money-slide-zero-split`,
-                    placement: {
-                      type: U.SPLIT,
-                      numbers: [-1, 0],
-                      displayName: "Split 0/00",
-                    },
-                    amount: h(S, U.SPLIT),
-                  })
-                : (c.push({
-                    id: `${s.id}-money-slide-column-1`,
-                    placement: {
-                      type: U.COLUMN_1ST,
-                      numbers: E,
-                      displayName: "Column 1",
-                    },
-                    amount: h(S, U.COLUMN_1ST),
-                  }),
-                  c.push({
-                    id: `${s.id}-money-slide-column-2`,
-                    placement: {
-                      type: U.COLUMN_2ND,
-                      numbers: j,
-                      displayName: "Column 2",
-                    },
-                    amount: h(S, U.COLUMN_2ND),
-                  }));
-              for (let T = 0; T < w; T++)
-                [E[T], j[T]].forEach((A) =>
-                  c.push({
-                    id: `${s.id}-money-slide-straight-${A}`,
-                    placement: {
-                      type: U.STRAIGHT_UP,
-                      numbers: [A],
-                      displayName: String(A),
-                    },
-                    amount: h(_, U.STRAIGHT_UP),
-                  }),
-                );
             } else if (s.config.strategyMode === "SHIFTING_DOZENS") {
               const x = [
                   {
@@ -15663,45 +15287,6 @@ Error generating stack: ` +
                 S = d ? w.onWinValue : w.onLossValue;
               (b(_, S),
                 g && ((c.isTriggered = !1), (c.currentNodeId = a.rootNodeId)));
-            }
-          } else if (a.strategyMode === "BLACK_WINNER_PEELER") {
-            const w = n.value,
-              _ = Jr.includes(w),
-              S = Lu.includes(w),
-              E = new Set(c.eliminatedBetIds || []);
-
-            if (_) {
-              c.blackPeelerSitOut = !0;
-              c.blackPeelerPendingRedIncrease = !0;
-            } else if (h) {
-              c.blackPeelerLossUnits =
-                (c.blackPeelerLossUnits || 0) +
-                (a.blackPeelerLossUnit || 1);
-            }
-
-            if (S) {
-              const j = e.bets.find(
-                (T) =>
-                  T.placement.type === U.STRAIGHT_UP &&
-                  T.placement.numbers.includes(w) &&
-                  !E.has(T.id),
-              );
-              j && E.add(j.id);
-            }
-            c.eliminatedBetIds = Array.from(E);
-
-            const j = Math.max(1, a.blackPeelerPeelResetCount || 6),
-              T = Math.max(1, a.blackPeelerPeakResetStep || 50),
-              A = Number(c.blackPeelerLastResetProfit) || 0,
-              C = E.size >= j,
-              M = c.sessionProfit >= A + T;
-            if (C || M) {
-              c.eliminatedBetIds = [];
-              c.blackPeelerLossUnits = 0;
-              c.blackPeelerPendingRedIncrease = !1;
-              c.blackPeelerSitOut = !1;
-              M && (c.blackPeelerLastResetProfit = c.sessionProfit);
-              g = !0;
             }
           } else if (a.strategyMode === "NODE_FLOW") {
             if (!m) {
@@ -15872,20 +15457,6 @@ Error generating stack: ` +
                       : j === re.PREV_CHAIN_STEP &&
                         (c.chainIndex = Math.max(0, c.chainIndex - 1));
                 }
-              } else if (a.strategyMode === "MONEY_SLIDE") {
-                const E = c.sessionProfit,
-                  j = c.peakSessionBankroll ?? 0;
-                d
-                  ? a.moneySlideResetOnAnyWin === !0
-                    ? ((c.moneySlideStep = 0),
-                      (c.peakSessionBankroll = Math.max(E, j)),
-                      (g = !0))
-                    : E >= j &&
-                      ((c.moneySlideStep = 0),
-                      (c.peakSessionBankroll = E),
-                      (g = !0))
-                  : h &&
-                    (c.moneySlideStep = (c.moneySlideStep || 0) + 1);
               } else if (a.strategyMode === "SHIFTING_DOZENS") {
                 const E = n.value;
                 E >= 1 && E <= 12
@@ -17134,7 +16705,6 @@ Error generating stack: ` +
               [se, G] = N.useState(!1),
               [P, F] = N.useState(""),
               [ie, pe] = N.useState(!1),
-              [runMode, setRunMode] = N.useState("FIVE"),
               ge = N.useRef(null),
               D = l === "IDLE",
               q =
@@ -17187,7 +16757,7 @@ Error generating stack: ` +
                           p.jsx("span", {
                             className:
                               "text-[6px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-0.5",
-                            children: "STRATEGY",
+                            children: "IDENT",
                           }),
                           p.jsx(vb, { size: 10, className: "text-white/40" }),
                         ],
@@ -17196,7 +16766,7 @@ Error generating stack: ` +
                         type: "text",
                         value: w,
                         onChange: (ue) => _(ue.target.value),
-                        placeholder: "Strategy name...",
+                        placeholder: "Identity...",
                         className:
                           "bg-transparent border-b border-white/10 px-0.5 text-[10px] font-black text-white uppercase tracking-tighter focus:outline-none focus:border-indigo-500/50 flex-1 min-w-0",
                         disabled: !D,
@@ -17208,7 +16778,7 @@ Error generating stack: ` +
                             onClick: E,
                             className:
                               "p-1.5 bg-white/5 hover:bg-white/10 rounded-md text-slate-400 transition-all active:scale-90",
-                            title: "Start New Strategy",
+                            title: "Reset Workspace (New)",
                             disabled: !D,
                             children: p.jsx(bl, { size: 12 }),
                           }),
@@ -17230,7 +16800,7 @@ Error generating stack: ` +
                               p.jsx("button", {
                                 onClick: () => J(!I),
                                 className: `p-1.5 rounded-md transition-all active:scale-90 ${I ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-indigo-400"}`,
-                                title: "Saved Strategies",
+                                title: "Strategy Vault (Recent)",
                                 children: p.jsx(qo, { size: 10 }),
                               }),
                             ],
@@ -17247,7 +16817,7 @@ Error generating stack: ` +
                                     p.jsx("p", {
                                       className:
                                         "text-[8px] font-black text-slate-500 uppercase tracking-widest",
-                                      children: "Saved Strategies",
+                                      children: "Recent Vault",
                                     }),
                                     p.jsx("button", {
                                       onClick: () => J(!1),
@@ -17300,7 +16870,7 @@ Error generating stack: ` +
                                       : p.jsx("div", {
                                           className:
                                             "p-4 text-center text-[8px] text-slate-600 uppercase font-black tracking-widest",
-                                          children: "No Saved Strategies",
+                                          children: "Empty Vault",
                                         }),
                                 }),
                               ],
@@ -17308,7 +16878,7 @@ Error generating stack: ` +
                           p.jsx("button", {
                             onClick: S,
                             className: `flex items-center gap-1.5 px-3 py-1.5 rounded-md font-black text-[9px] uppercase tracking-wider transition-all active:scale-95 shadow-lg border ${A === "SAVED" ? "bg-emerald-600 border-emerald-400 text-white" : "bg-indigo-600 border-indigo-400 text-white hover:bg-indigo-500"}`,
-                            title: "Save Strategy to Computer",
+                            title: "Save to Computer & Vault",
                             children:
                               A === "SAVED"
                                 ? p.jsxs(p.Fragment, {
@@ -17376,7 +16946,7 @@ Error generating stack: ` +
                                                       },
                                                       className:
                                                         "flex-1 text-left flex items-center gap-2 min-w-0",
-                                                      disabled: false,
+                                                      disabled: !1,
                                                       children: [
                                                         p.jsx(Sb, {
                                                           size: 8,
@@ -17537,7 +17107,7 @@ Error generating stack: ` +
                           p.jsx("button", {
                             onClick: () => g("FAST"),
                             className: `p-1 rounded transition-all ${m === "FAST" ? "bg-emerald-500 text-white" : "text-slate-500 hover:text-white"}`,
-                            title: "Simulation Speed",
+                            title: "Engine Speed",
                             children: p.jsx(kT, { size: 10 }),
                           }),
                         ],
@@ -17546,13 +17116,13 @@ Error generating stack: ` +
                     p.jsxs("button", {
                       onClick: d,
                       className: `${q} border-orange-500/20 text-orange-200 hover:bg-orange-500/10`,
-                      title: "Roulette Payout Check",
+                      title: "RNG & Logic Audit",
                       children: [
                         p.jsx(xh, { size: 10 }),
                         p.jsx("span", {
                           className:
                             "text-[8px] font-black uppercase tracking-widest",
-                          children: "CHECK",
+                          children: "AUDIT",
                         }),
                       ],
                     }),
@@ -17577,7 +17147,7 @@ Error generating stack: ` +
                     p.jsxs("button", {
                       onClick: z,
                       className: `${q} border-indigo-500/20 text-indigo-200 hover:bg-indigo-500/10`,
-                      title: "Table Settings",
+                      title: "Global Configuration",
                       children: [
                         p.jsx(YT, {
                           size: 12,
@@ -17590,163 +17160,16 @@ Error generating stack: ` +
                         }),
                       ],
                     }),
-                    p.jsxs("div", {
-                      className: `${q} border-emerald-500/20 bg-emerald-950/10`,
-                      title: "Choose a five-game run or Monte Carlo",
-                      children: [
-                        p.jsx(xl, {
-                          size: 10,
-                          className: "text-emerald-300",
-                        }),
-                        p.jsxs("div", {
-                          className:
-                            "flex items-center overflow-hidden rounded-md border border-white/10",
-                          children: [
-                            p.jsx("button", {
-                              type: "button",
-                              onClick: () => setRunMode("FIVE"),
-                              disabled: !D,
-                              className: `px-2 py-1 text-[7px] font-black uppercase tracking-widest transition-colors ${runMode === "FIVE" ? "bg-emerald-600 text-white" : "bg-black/30 text-slate-500 hover:text-white"}`,
-                              children: "Run 5",
-                            }),
-                            p.jsx("button", {
-                              type: "button",
-                              onClick: () => setRunMode("MONTE_CARLO"),
-                              disabled: !D,
-                              className: `border-l border-white/10 px-2 py-1 text-[7px] font-black uppercase tracking-widest transition-colors ${runMode === "MONTE_CARLO" ? "bg-indigo-600 text-white" : "bg-black/30 text-slate-500 hover:text-white"}`,
-                              children: "Monte Carlo",
-                            }),
-                          ],
-                        }),
-                        runMode === "MONTE_CARLO" &&
-                          p.jsxs("label", {
-                            className:
-                              "flex items-center gap-1 text-[7px] font-black uppercase tracking-widest text-slate-500",
-                            children: [
-                              "Runs",
-                              p.jsx("input", {
-                                type: "number",
-                                min: "1",
-                                max: "50000",
-                                value: n.numberOfSimulations,
-                                onChange: (ue) =>
-                                  a({
-                                    ...n,
-                                    numberOfSimulations: Math.max(
-                                      1,
-                                      Math.min(
-                                        5e4,
-                                        Number(ue.target.value) || 1,
-                                      ),
-                                    ),
-                                  }),
-                                className:
-                                  "w-14 bg-black/50 border border-white/10 rounded px-1 py-0.5 text-[9px] font-mono font-black text-white outline-none focus:border-emerald-400",
-                                disabled: !D,
-                              }),
-                            ],
-                          }),
-                        p.jsxs("label", {
-                          className:
-                            "flex items-center gap-1 text-[7px] font-black uppercase tracking-widest text-slate-500",
-                          children: [
-                            "Spins",
-                            p.jsx("input", {
-                              type: "number",
-                              min: "1",
-                              max: "100000",
-                              value: n.spinsPerSimulation,
-                              onChange: (ue) =>
-                                a({
-                                  ...n,
-                                  spinsPerSimulation: Math.max(
-                                    1,
-                                    Math.min(
-                                      1e5,
-                                      Number(ue.target.value) || 1,
-                                    ),
-                                  ),
-                                }),
-                              className:
-                                "w-16 bg-black/50 border border-white/10 rounded px-1 py-0.5 text-[9px] font-mono font-black text-white outline-none focus:border-emerald-400",
-                              disabled: !D,
-                            }),
-                          ],
-                        }),
-                        p.jsxs("label", {
-                          className:
-                            "flex items-center gap-1 text-[7px] font-black uppercase tracking-widest text-slate-500",
-                          children: [
-                            "Goal",
-                            p.jsx("input", {
-                              type: "number",
-                              min: "0",
-                              value: n.totalProfitGoal || 0,
-                              onChange: (ue) => {
-                                const we = Math.max(
-                                  0,
-                                  Number(ue.target.value) || 0,
-                                );
-                                a({
-                                  ...n,
-                                  totalProfitGoal: we,
-                                  useTotalProfitGoal: we > 0,
-                                });
-                              },
-                              className:
-                                "w-14 bg-black/50 border border-white/10 rounded px-1 py-0.5 text-[9px] font-mono font-black text-white outline-none focus:border-emerald-400",
-                              disabled: !D,
-                            }),
-                          ],
-                        }),
-                        p.jsxs("label", {
-                          className:
-                            "flex items-center gap-1 text-[7px] font-black uppercase tracking-widest text-slate-500",
-                          children: [
-                            "Loss",
-                            p.jsx("input", {
-                              type: "number",
-                              min: "0",
-                              value: n.stopLoss || 0,
-                              onChange: (ue) =>
-                                a({
-                                  ...n,
-                                  stopLoss: Math.max(
-                                    0,
-                                    Number(ue.target.value) || 0,
-                                  ),
-                                }),
-                              className:
-                                "w-14 bg-black/50 border border-white/10 rounded px-1 py-0.5 text-[9px] font-mono font-black text-white outline-none focus:border-emerald-400",
-                              disabled: !D,
-                            }),
-                          ],
-                        }),
-                      ],
-                    }),
                     p.jsx("div", {
                       className: "ml-1 flex gap-2",
                       children: D
                         ? p.jsxs("button", {
-                            onClick: () =>
-                              s(
-                                runMode === "MONTE_CARLO"
-                                  ? Math.max(
-                                      1,
-                                      Math.min(
-                                        5e4,
-                                        Number(n.numberOfSimulations) || 1,
-                                      ),
-                                    )
-                                  : 5,
-                              ),
+                            onClick: s,
                             className:
                               "flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-black text-[9px] uppercase tracking-wider transition-all shadow-md active:scale-95 group",
                             children: [
                               p.jsx(Iu, { size: 10, fill: "currentColor" }),
-                              runMode === "MONTE_CARLO"
-                                ? `RUN MC × ${Math.max(1, Number(n.numberOfSimulations) || 1)}`
-                                : "RUN 5",
+                              "RUN",
                             ],
                           })
                         : p.jsxs(p.Fragment, {
@@ -18144,9 +17567,7 @@ Error generating stack: ` +
                             className:
                               "w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-20 text-white rounded-lg font-black text-[7px] uppercase tracking-widest shadow-lg",
                             children:
-                              n.status === "RUNNING"
-                                ? "CHECKING"
-                                : "CHECK PAYOUTS",
+                              n.status === "RUNNING" ? "SCANNING" : "RUN AUDIT",
                           }),
                         ],
                       }),
@@ -18166,7 +17587,7 @@ Error generating stack: ` +
                                     "text-[6px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-1",
                                   children: [
                                     p.jsx(ZT, { size: 8 }),
-                                    " Payout Check Log",
+                                    " Audit Log",
                                   ],
                                 }),
                               }),
@@ -18225,10 +17646,8 @@ Error generating stack: ` +
                     className:
                       "px-3 py-1.5 bg-white/[0.01] border-t border-white/5 flex justify-between items-center text-[7px] text-slate-700 font-black uppercase tracking-widest",
                     children: [
-                      p.jsx("span", {
-                        children: "Payout math: American roulette",
-                      }),
-                      p.jsxs("span", { children: ["Wheel: ", t.type] }),
+                      p.jsx("span", { children: "Engine: PhantomCore-v2.5" }),
+                      p.jsxs("span", { children: ["Variant: ", t.type] }),
                     ],
                   }),
                 ],
@@ -18265,7 +17684,7 @@ Error generating stack: ` +
                               p.jsx("h2", {
                                 className:
                                   "text-3xl font-black text-white uppercase tracking-tighter",
-                                children: "Roulette Test Results",
+                                children: "Simulation Intelligence Archives",
                               }),
                               p.jsxs("div", {
                                 className: "flex items-center gap-4 mt-1",
@@ -18273,12 +17692,12 @@ Error generating stack: ` +
                                   p.jsx("span", {
                                     className:
                                       "text-[10px] font-black text-slate-500 uppercase tracking-widest",
-                                    children: "Saved Run Reports",
+                                    children: "Persistent Data Vault",
                                   }),
                                   p.jsxs("span", {
                                     className:
                                       "text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20",
-                                    children: [e.length, " Reports Saved"],
+                                    children: [e.length, " Records Stored"],
                                   }),
                                 ],
                               }),
@@ -18310,12 +17729,12 @@ Error generating stack: ` +
                               p.jsx("p", {
                                 className:
                                   "text-sm font-black uppercase tracking-[0.3em] text-slate-500",
-                                children: "No Saved Roulette Tests",
+                                children: "No Intelligence Samples Found",
                               }),
                               p.jsx("p", {
                                 className: "text-xs text-slate-600 mt-2",
                                 children:
-                                  "Run a roulette test to save a report",
+                                  "Execute a simulation to generate a data report",
                               }),
                             ],
                           })
@@ -18380,7 +17799,7 @@ Error generating stack: ` +
                                                   "text-lg font-black text-white uppercase tracking-tighter truncate",
                                                 children:
                                                   l.name ||
-                                                  `Test Run #${l.id.slice(-4)}`,
+                                                  `Batch #${l.id.slice(-4)}`,
                                               }),
                                               p.jsxs("p", {
                                                 className:
@@ -18389,10 +17808,10 @@ Error generating stack: ` +
                                                   l.rules.type,
                                                   " · ",
                                                   l.settings.spinsPerSimulation,
-                                                  " Spins per game x ",
+                                                  " Spins x ",
                                                   l.settings
                                                     .numberOfSimulations,
-                                                  " Games",
+                                                  " Runs",
                                                 ],
                                               }),
                                             ],
@@ -19139,8 +18558,6 @@ Error generating stack: ` +
             triggerHighlightIds: d = [],
             disableScale: h = !1,
             rules: m,
-            resultMode: previewResultMode = !1,
-            resultFlashNumber: previewResultFlashNumber = null,
           }) => {
             const [g, b] = N.useState(null),
               x = N.useMemo(() => {
@@ -19185,16 +18602,6 @@ Error generating stack: ` +
                 );
               }, [t]),
               E = (j, T) => {
-                if (previewResultMode) {
-                  (j &&
-                    j.type === U.STRAIGHT_UP &&
-                    j.numbers &&
-                    j.numbers.length === 1 &&
-                    e(j),
-                    T.preventDefault(),
-                    T.stopPropagation());
-                  return;
-                }
                 if (s && a) {
                   const A = S.find((C) => qe(C.placement) === s);
                   (A && qe(A.placement) !== qe(j) && a(A.placement, j, !0),
@@ -19209,14 +18616,9 @@ Error generating stack: ` +
                 e(j);
               };
             return p.jsxs("div", {
-              className: `aspect-[2.42/1] relative bg-emerald-950 rounded-2xl select-none shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-[4px] md:border-[6px] overflow-hidden w-full max-w-[950px] ${previewResultMode ? "border-yellow-400 cursor-crosshair ring-2 ring-yellow-300/60" : "border-amber-900/80"}`,
+              className:
+                "aspect-[2.42/1] relative bg-emerald-950 rounded-2xl select-none shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-[4px] md:border-[6px] border-amber-900/80 overflow-hidden w-full max-w-[950px]",
               children: [
-                previewResultMode &&
-                  p.jsx("div", {
-                    className:
-                      "absolute top-1 left-1/2 -translate-x-1/2 z-30 rounded-full border border-yellow-200/60 bg-black/75 px-3 py-1 text-[7px] font-black uppercase tracking-[0.18em] text-yellow-300 pointer-events-none shadow-lg",
-                    children: "Preview: click the winning number",
-                  }),
                 p.jsxs("div", {
                   className:
                     "h-full w-full grid grid-cols-[5fr_repeat(12,6fr)_6fr] grid-rows-[repeat(3,1fr)_0.6fr_0.6fr] gap-px bg-amber-900/40",
@@ -19227,13 +18629,13 @@ Error generating stack: ` +
                       children: [
                         p.jsx("div", {
                           onClick: (j) => E(st[0], j),
-                          className: `flex items-center justify-center cursor-pointer transition-all text-sm md:text-base font-bold text-white ${Nh(0)} ${previewResultFlashNumber === 0 ? "soulman-preview-result-flash" : ""} ${w(0) ? (f ? "bg-yellow-500/20 ring-2 ring-yellow-400 ring-inset shadow-[0_0_15px_rgba(251,191,36,0.3)] animate-pulse" : "ring-2 ring-white ring-inset") : ""}`,
+                          className: `flex items-center justify-center cursor-pointer transition-all text-sm md:text-base font-bold text-white ${Nh(0)} ${w(0) ? (f ? "bg-yellow-500/20 ring-2 ring-yellow-400 ring-inset shadow-[0_0_15px_rgba(251,191,36,0.3)] animate-pulse" : "ring-2 ring-white ring-inset") : ""}`,
                           children: "0",
                         }),
                         m.type === "AMERICAN" &&
                           p.jsx("div", {
                             onClick: (j) => E(st[1], j),
-                            className: `flex items-center justify-center cursor-pointer transition-all text-sm md:text-base font-bold text-white ${Nh(-1)} ${previewResultFlashNumber === -1 ? "soulman-preview-result-flash" : ""} ${w(-1) ? (f ? "bg-yellow-500/20 ring-2 ring-yellow-400 ring-inset shadow-[0_0_15px_rgba(251,191,36,0.3)] animate-pulse" : "ring-2 ring-white ring-inset") : ""}`,
+                            className: `flex items-center justify-center cursor-pointer transition-all text-sm md:text-base font-bold text-white ${Nh(-1)} ${w(-1) ? (f ? "bg-yellow-500/20 ring-2 ring-yellow-400 ring-inset shadow-[0_0_15px_rgba(251,191,36,0.3)] animate-pulse" : "ring-2 ring-white ring-inset") : ""}`,
                             children: "00",
                           }),
                       ],
@@ -19249,7 +18651,7 @@ Error generating stack: ` +
                           "div",
                           {
                             onClick: (M) => E(j, M),
-                            className: `col-start-${(A = j.gridInfo) == null ? void 0 : A.colStart} row-start-${(C = j.gridInfo) == null ? void 0 : C.rowStart} flex items-center justify-center cursor-pointer transition-all font-black text-xs md:text-lg lg:text-xl text-white ${Nh(T)} ${previewResultFlashNumber === T ? "soulman-preview-result-flash" : ""} ${w(T) ? (f ? "bg-yellow-500/10 ring-2 ring-yellow-400/50 ring-inset shadow-inner" : "ring-2 ring-white ring-inset") : ""}`,
+                            className: `col-start-${(A = j.gridInfo) == null ? void 0 : A.colStart} row-start-${(C = j.gridInfo) == null ? void 0 : C.rowStart} flex items-center justify-center cursor-pointer transition-all font-black text-xs md:text-lg lg:text-xl text-white ${Nh(T)} ${w(T) ? (f ? "bg-yellow-500/10 ring-2 ring-yellow-400/50 ring-inset shadow-inner" : "ring-2 ring-white ring-inset") : ""}`,
                             children: T,
                           },
                           T,
@@ -19631,7 +19033,6 @@ Error generating stack: ` +
             config: j,
             onUpdateConfig: T,
             onQuickBetAction: A,
-            startingBankroll: previewStartingBankroll = 1e3,
           }) => {
             var J, se;
             const [C, M] = N.useState(!0),
@@ -19645,24 +19046,15 @@ Error generating stack: ` +
               I = () => {
                 const G = g.filter((P) => P.bets && P.bets.length > 0);
                 if (G.length === 0) {
-                  alert("Save a table setup slot first to build a chain.");
+                  alert("Populate Layout Vault slots first to build a chain.");
                   return;
                 }
                 K((P) => ({ ...P, chainSteps: G }));
               };
-            const [previewState, setPreviewState] = N.useState(null),
-              [previewResultFlash, setPreviewResultFlash] = N.useState(null),
-              previewResultFlashTimer = N.useRef(null);
+            const [previewState, setPreviewState] = N.useState(null);
             N.useEffect(() => {
-              (setPreviewState(null), setPreviewResultFlash(null));
+              setPreviewState(null);
             }, [previewSourceLane == null ? void 0 : previewSourceLane.id, n, j, d]);
-            N.useEffect(
-              () => () => {
-                previewResultFlashTimer.current &&
-                  clearTimeout(previewResultFlashTimer.current);
-              },
-              [],
-            );
             const previewParsedSequence =
                 j && j.strategyMode === "ROTATING" ? dT(j.sequence || "") : [],
               previewClone = (G) => JSON.parse(JSON.stringify(G ?? null)),
@@ -19691,12 +19083,6 @@ Error generating stack: ` +
                   eliminatedBetIds: previewClone(G.eliminatedBetIds || []),
                   eliminationPausedIds: previewClone(G.eliminationPausedIds || []),
                   currentNodeId: G.currentNodeId || ((j || {}).rootNodeId),
-                  blackPeelerSitOut: G.blackPeelerSitOut ?? !1,
-                  blackPeelerPendingRedIncrease:
-                    G.blackPeelerPendingRedIncrease ?? !1,
-                  blackPeelerLossUnits: G.blackPeelerLossUnits ?? 0,
-                  blackPeelerLastResetProfit:
-                    G.blackPeelerLastResetProfit ?? 0,
                 };
               },
               getPreviewReady = (G) => {
@@ -19711,7 +19097,6 @@ Error generating stack: ` +
                   lastAction: "READY",
                   lastResult: "Start",
                   lastProfit: 0,
-                  bankroll: previewStartingBankroll,
                   activeTriggers: F.activeTriggers || [],
                 };
               },
@@ -19751,10 +19136,12 @@ Error generating stack: ` +
                 const Ze = pe.find((gt) => D(gt) === 0);
                 return ge(Ze ?? 0);
               },
-              applyProgressionPreviewResult = (P, D, G) => {
-                const F = previewClone(P.lane),
+              runProgressionPreview = (G) => {
+                const P = getPreviewReady(previewState),
+                  F = previewClone(P.lane),
                   pe = previewClone(P.history || []),
-                  ge = previewClone(P.bets || []);
+                  ge = previewClone(P.bets || []),
+                  D = choosePreviewResult(ge, G, F);
                 let q = F,
                   te = 0,
                   ae = [];
@@ -19767,7 +19154,7 @@ Error generating stack: ` +
                   result: D,
                   betAmount: ge.reduce((he, Ae) => he + Ae.amount, 0),
                   outcome: te,
-                  bankroll: (P.bankroll ?? previewStartingBankroll) + te,
+                  bankroll: 0,
                   bets: ae,
                 };
                 pe.push(ue);
@@ -19780,209 +19167,12 @@ Error generating stack: ` +
                   lastAction: G,
                   lastResult: D.value === -1 ? "00" : String(D.value),
                   lastProfit: te,
-                  bankroll: ue.bankroll,
                   activeTriggers: we.activeTriggers || [],
                 });
               },
-              runProgressionPreview = (G) => {
-                if (!previewState) return;
-                const P = getPreviewReady(previewState),
-                  F = previewClone(P.lane),
-                  pe = previewClone(P.bets || []),
-                  ge = choosePreviewResult(pe, G, F);
-                applyProgressionPreviewResult(P, ge, G);
-              },
-              flashProgressionPreviewNumber = (G) => {
-                (previewResultFlashTimer.current &&
-                  clearTimeout(previewResultFlashTimer.current),
-                  setPreviewResultFlash(null),
-                  setTimeout(() => {
-                    (setPreviewResultFlash(G),
-                      (previewResultFlashTimer.current = setTimeout(
-                        () => setPreviewResultFlash(null),
-                        2250,
-                      )));
-                  }, 0));
-              },
-              runProgressionPreviewNumber = (G) => {
-                if (!previewState) return;
-                flashProgressionPreviewNumber(G);
-                const P = getPreviewReady(previewState),
-                  F = { value: G, color: rb(G) };
-                let pe = 0;
-                try {
-                  pe = vh(Number.MAX_SAFE_INTEGER, P.bets || [], F).netProfit;
-                } catch {
-                  pe = 0;
-                }
-                applyProgressionPreviewResult(
-                  P,
-                  F,
-                  pe > 0 ? "WIN" : pe < 0 ? "LOSS" : "PUSH",
-                );
-              },
-              startProgressionPreview = () => {
-                (setPreviewResultFlash(null),
-                  setPreviewState(getPreviewReady(null)));
-              },
-              resetProgressionPreview = () => {
-                (previewResultFlashTimer.current &&
-                  clearTimeout(previewResultFlashTimer.current),
-                  setPreviewResultFlash(null),
-                  setPreviewState(null));
-              },
+              resetProgressionPreview = () => setPreviewState(null),
               previewDisplayBets = previewState ? previewState.bets : n,
               previewWager = previewDisplayBets.reduce((G, P) => G + P.amount, 0),
-              previewBankroll = previewState
-                ? previewState.bankroll
-                : previewStartingBankroll,
-              previewCanPush =
-                !!previewState &&
-                previewDisplayBets.length > 0 &&
-                [0, -1, ...Array.from({ length: 36 }, (G, P) => P + 1)].some(
-                  (G) => {
-                    try {
-                      return (
-                        vh(
-                          Number.MAX_SAFE_INTEGER,
-                          previewDisplayBets,
-                          { value: G, color: rb(G) },
-                        ).netProfit === 0
-                      );
-                    } catch {
-                      return !1;
-                    }
-                  },
-                ),
-              previewDescribeAction = (G, P) => {
-                const F = {
-                  RESET: "Reset",
-                  RESTART_CHAIN: "Reset chain",
-                  DO_NOTHING: "Rebet",
-                  MARTINGALE: "Double wager",
-                  D_ALEMBERT: "Move 1 unit",
-                  FIBONACCI: "Fibonacci step",
-                  NEXT_CHAIN_STEP: "Next step",
-                  PREV_CHAIN_STEP: "Previous step",
-                };
-                return F[G]
-                  ? F[G]
-                  : G === "ADD_UNITS"
-                    ? `Add ${P || 1} unit`
-                    : G === "SUBTRACT_UNITS"
-                      ? `Remove ${P || 1} unit`
-                      : G === "MULTIPLY"
-                        ? `Multiply ×${P || 1}`
-                        : "Follow progression";
-              },
-              previewStepNumber = previewState
-                ? j.strategyMode === "MONEY_SLIDE"
-                  ? (previewState.lane.moneySlideStep || 0) + 1
-                  : j.strategyMode === "CHAIN"
-                    ? (previewState.lane.chainIndex || 0) + 1
-                    : (previewState.lane.progressionIndex || 0) + 1
-                : 1,
-              previewMoneySlidePairs = [
-                [1, 2],
-                [4, 5],
-                [7, 8],
-                [10, 11],
-                [13, 14],
-                [16, 17],
-                [19, 20],
-                [22, 23],
-                [25, 26],
-                [28, 29],
-                [31, 32],
-                [34, 35],
-              ],
-              previewLossStepText =
-                previewState && previewState.lastAction === "LOSS"
-                  ? j.strategyMode === "MONEY_SLIDE"
-                    ? (previewState.lane.moneySlideStep || 0) <
-                      previewMoneySlidePairs.length
-                      ? `LOSS: STEP ${previewStepNumber} · ADD ${previewMoneySlidePairs[previewState.lane.moneySlideStep || 0].join(" & ")} · ALL BETS +1 UNIT`
-                      : `LOSS: STEP ${previewStepNumber} · ALL BETS +1 UNIT`
-                    : `LOSS: STEP ${previewStepNumber}`
-                  : null,
-              previewRuleItems = (() => {
-                if (j.strategyMode === "MONEY_SLIDE")
-                  return [
-                    { id: "READY", text: `START: $${V}` },
-                    {
-                      id: "WIN",
-                      text:
-                        j.moneySlideResetOnAnyWin === !0
-                          ? "WIN: Reset"
-                          : "WIN: Peak reset / else rebet",
-                    },
-                    {
-                      id: "LOSS",
-                      text:
-                        previewLossStepText ||
-                        "LOSS: Add next pair +1 unit",
-                    },
-                    { id: "PUSH", text: "PUSH: Rebet" },
-                  ];
-                if (j.strategyMode === "BLACK_WINNER_PEELER")
-                  return [
-                    {
-                      id: "READY",
-                      text:
-                        "START: $3 Black + $1 each black number + $2 on 0/00",
-                    },
-                    {
-                      id: "WIN",
-                      text:
-                        "BLACK HIT: Peel that number; reset at 6 peeled or +$50 bankroll",
-                    },
-                    {
-                      id: "LOSS",
-                      text:
-                        "RED: Sit out until non-red, then add $1 to every active bet",
-                    },
-                    {
-                      id: "PUSH",
-                      text: "NON-RED OBSERVATION: Apply pending +$1 and resume",
-                    },
-                  ];
-                if (j.strategyMode === "CHAIN")
-                  return [
-                    { id: "READY", text: `START · $${V}` },
-                    {
-                      id: "WIN",
-                      text: `WIN · ${j.chainResetOnPeakBank ? "Peak reset; else next step" : previewDescribeAction(j.chainOnWin, j.onWinValue)}`,
-                    },
-                    {
-                      id: "LOSS",
-                      text:
-                        previewLossStepText ||
-                        `LOSS · ${previewDescribeAction(j.chainOnLoss, j.onLossValue)}`,
-                    },
-                    { id: "PUSH", text: "PUSH · Rebet" },
-                  ];
-                return [
-                  { id: "READY", text: `START · $${V}` },
-                  {
-                    id: "WIN",
-                    text: `WIN · ${previewDescribeAction(j.onWinAction, j.onWinValue)}`,
-                  },
-                  {
-                    id: "LOSS",
-                    text:
-                      previewLossStepText ||
-                      `LOSS · ${previewDescribeAction(j.onLossAction, j.onLossValue)}`,
-                  },
-                  { id: "PUSH", text: "PUSH · Rebet" },
-                ];
-              })(),
-              previewActiveRuleText = previewState
-                ? (
-                    previewRuleItems.find(
-                      (G) => G.id === previewState.lastAction,
-                    ) || previewRuleItems[0]
-                  ).text
-                : null,
               previewSummary = previewDisplayBets.length
                 ? previewDisplayBets
                     .slice(0, 8)
@@ -20095,24 +19285,12 @@ Error generating stack: ` +
                                   },
                                   children: p.jsx(Ch, {
                                     bets: previewDisplayBets,
-                                    onBetSelect: previewState
-                                      ? (G) => {
-                                          G &&
-                                            G.type === U.STRAIGHT_UP &&
-                                            G.numbers &&
-                                            G.numbers.length === 1 &&
-                                            runProgressionPreviewNumber(
-                                              G.numbers[0],
-                                            );
-                                        }
-                                      : a,
+                                    onBetSelect: previewState ? () => {} : a,
                                     onStackDelete: previewState ? () => {} : l,
                                     onStackMove: previewState ? () => {} : s,
                                     onStackSelectForMove: previewState ? () => {} : c,
                                     moveSourceId: previewState ? null : f,
                                     rules: d,
-                                    resultMode: !!previewState,
-                                    resultFlashNumber: previewResultFlash,
                                   }),
                                 }),
                                 p.jsxs("div", {
@@ -20145,79 +19323,12 @@ Error generating stack: ` +
                                     }),
                                   ],
                                 }),
-                                p.jsxs("div", {
-                                  className:
-                                    "w-24 shrink-0 self-stretch rounded-xl border border-white/10 bg-black/55 p-2 flex flex-col justify-center gap-3 shadow-inner",
-                                  children: [
-                                    p.jsxs("div", {
-                                      className: "flex flex-col gap-0.5",
-                                      children: [
-                                        p.jsx("span", {
-                                          className:
-                                            "text-[6px] font-black uppercase tracking-[0.2em] text-slate-500",
-                                          children: "Total",
-                                        }),
-                                        p.jsxs("span", {
-                                          className:
-                                            "text-sm font-mono font-black text-amber-300",
-                                          children: ["$", previewWager.toLocaleString()],
-                                        }),
-                                      ],
-                                    }),
-                                    p.jsxs("div", {
-                                      className: "flex flex-col gap-0.5",
-                                      children: [
-                                        p.jsx("span", {
-                                          className:
-                                            "text-[6px] font-black uppercase tracking-[0.2em] text-slate-500",
-                                          children: "Bankroll",
-                                        }),
-                                        p.jsxs("span", {
-                                          className: `text-sm font-mono font-black ${previewBankroll >= previewStartingBankroll ? "text-emerald-400" : "text-red-400"}`,
-                                          children: [
-                                            "$",
-                                            previewBankroll.toLocaleString(),
-                                          ],
-                                        }),
-                                      ],
-                                    }),
-                                  ],
-                                }),
                               ],
                             }),
                             p.jsxs("div", {
                               className:
                                 "w-full max-w-4xl bg-black/50 border border-amber-400/20 rounded-2xl p-3 flex flex-col gap-2 shadow-inner",
                               children: [
-                                p.jsx("div", {
-                                  className:
-                                    "grid grid-cols-2 lg:grid-cols-4 gap-1 border-b border-white/5 pb-2",
-                                  children: previewRuleItems.map((G) => {
-                                    const P =
-                                        !!previewState &&
-                                        previewState.lastAction === G.id,
-                                      F =
-                                        G.id === "WIN"
-                                          ? "border-emerald-300 bg-emerald-500/30 text-emerald-100 shadow-[0_0_18px_rgba(16,185,129,0.35)]"
-                                          : G.id === "LOSS"
-                                            ? "border-rose-300 bg-rose-500/30 text-rose-100 shadow-[0_0_18px_rgba(244,63,94,0.35)]"
-                                            : G.id === "PUSH"
-                                              ? "border-slate-300 bg-slate-500/30 text-white shadow-[0_0_18px_rgba(148,163,184,0.3)]"
-                                              : "border-amber-300 bg-amber-500/25 text-amber-100 shadow-[0_0_18px_rgba(245,158,11,0.3)]";
-                                    return p.jsx(
-                                      "div",
-                                      {
-                                        "data-preview-rule": G.id,
-                                        "data-preview-rule-active": P
-                                          ? "true"
-                                          : "false",
-                                        className: `min-h-8 rounded-lg border px-2 py-1 flex items-center justify-center text-center text-[7px] font-black uppercase leading-tight tracking-wide transition-all duration-300 ${P ? `${F} scale-[1.02]` : "border-white/10 bg-white/[0.03] text-slate-500"}`,
-                                        children: G.text,
-                                      },
-                                      G.id,
-                                    );
-                                  }),
-                                }),
                                 p.jsxs("div", {
                                   className:
                                     "flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3",
@@ -20234,13 +19345,12 @@ Error generating stack: ` +
                                           className:
                                             "text-[8px] font-bold text-slate-500 uppercase tracking-widest",
                                           children: previewState
-                                            ? previewActiveRuleText
-                                            : "Press Start Preview to clone and display the first bet.",
+                                            ? `Step ${previewState.spin} • ${previewState.lastAction} on ${previewState.lastResult} • Net ${previewState.lastProfit >= 0 ? "+" : ""}$${previewState.lastProfit}`
+                                            : "Safe tester is off — table is showing the real editable starting bet.",
                                         }),
                                       ],
                                     }),
-                                    previewState
-                                      ? p.jsxs("div", {
+                                    p.jsxs("div", {
                                       className:
                                         "flex flex-wrap items-center justify-center gap-2",
                                       children: [
@@ -20256,14 +19366,12 @@ Error generating stack: ` +
                                             "px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[8px] font-black uppercase tracking-widest shadow-lg shadow-rose-900/30 transition-all active:scale-95",
                                           children: "Loss",
                                         }),
-                                        previewCanPush &&
-                                          p.jsx("button", {
-                                            onClick: () =>
-                                              runProgressionPreview("PUSH"),
-                                            className:
-                                              "px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-[8px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95",
-                                            children: "Push",
-                                          }),
+                                        p.jsx("button", {
+                                          onClick: () => runProgressionPreview("PUSH"),
+                                          className:
+                                            "px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-[8px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95",
+                                          children: "Push",
+                                        }),
                                         p.jsx("button", {
                                           onClick: resetProgressionPreview,
                                           className:
@@ -20271,25 +19379,17 @@ Error generating stack: ` +
                                           children: "Reset Preview",
                                         }),
                                       ],
-                                    })
-                                      : p.jsx("button", {
-                                          onClick: startProgressionPreview,
-                                          className:
-                                            "px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[8px] font-black uppercase tracking-widest shadow-lg shadow-indigo-900/30 transition-all active:scale-95",
-                                          children: "Start Preview",
-                                        }),
+                                    }),
                                   ],
                                 }),
                                 p.jsxs("div", {
                                   className:
                                     "flex flex-col gap-1 border-t border-white/5 pt-2",
                                   children: [
-                                    p.jsx("div", {
+                                    p.jsxs("div", {
                                       className:
                                         "text-[8px] font-black text-emerald-400 uppercase tracking-widest",
-                                      children: previewState
-                                        ? `Next bet shown on table: $${previewWager}`
-                                        : "Preview has not started.",
+                                      children: ["Next bet shown on table: $", previewWager],
                                     }),
                                     p.jsx("div", {
                                       className:
@@ -20300,8 +19400,8 @@ Error generating stack: ` +
                                       className:
                                         "text-[7px] text-slate-600 font-bold uppercase tracking-widest",
                                       children: previewState
-                                        ? "Preview active: click any straight-up number on the board as the spin result, or use Win/Loss and Push when available."
-                                        : "The roulette test still starts from the real beginning; these buttons only run a cloned preview.",
+                                        ? "Preview mode locks table editing so the fake steps cannot touch the real strategy or simulation start."
+                                        : "The simulation still starts from the real beginning; these buttons only run a cloned preview.",
                                     }),
                                     previewState &&
                                       previewState.activeTriggers &&
@@ -20342,7 +19442,7 @@ Error generating stack: ` +
                                         p.jsx("span", {
                                           className:
                                             "text-[8px] font-black text-slate-400 uppercase tracking-widest",
-                                          children: "Saved Table Setups",
+                                          children: "Neural Layout Vault",
                                         }),
                                       ],
                                     }),
@@ -20350,7 +19450,7 @@ Error generating stack: ` +
                                       className:
                                         "text-[7px] font-bold text-slate-600 uppercase",
                                       children:
-                                        "Save current bets into slots",
+                                        "Snapshot current table state to slots",
                                     }),
                                   ],
                                 }),
@@ -20774,7 +19874,7 @@ Error generating stack: ` +
                                                 className:
                                                   "text-[7px] font-black text-purple-300 uppercase tracking-widest",
                                                 children:
-                                                  "Chain Steps:",
+                                                  "Chain Step Definition:",
                                               }),
                                             ],
                                           }),
@@ -20782,7 +19882,7 @@ Error generating stack: ` +
                                             onClick: I,
                                             className:
                                               "px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-[7px] font-black uppercase tracking-widest transition-all shadow-lg",
-                                            children: "Build Chain from Setups",
+                                            children: "Sync Chain to Vault",
                                           }),
                                         ],
                                       }),
@@ -45401,7 +44501,6 @@ Error generating stack: ` +
             onRenameRun: x,
             lastSpinResult: w,
             simSpeed: _ = "FAST",
-            settings: y,
           }) => {
             const [S, E] = N.useState(!1),
               [j, T] = N.useState(!1),
@@ -45463,14 +44562,10 @@ Error generating stack: ` +
                   let ae = 0,
                     ue = 0;
                   (t.forEach((we) => {
-                    if (te === 0) ae += n;
-                    else {
-                      const Oe =
-                        we.history[te - 1] ||
-                        we.history[we.history.length - 1];
-                      ae += Oe ? Oe.bankroll : n;
-                    }
-                    ue++;
+                    te === 0
+                      ? ((ae += n), ue++)
+                      : we.history[te - 1] &&
+                        ((ae += we.history[te - 1].bankroll), ue++);
                   }),
                     q.push({
                       spinIndex: te,
@@ -45526,15 +44621,7 @@ Error generating stack: ` +
                     chartMax: n + 500,
                     gradientOffset: 0.5,
                   };
-                const D = R.map((de) => de.bankroll);
-                (y &&
-                  y.useTotalProfitGoal &&
-                  y.totalProfitGoal > 0 &&
-                  D.push(n + y.totalProfitGoal),
-                  y &&
-                    y.stopLoss > 0 &&
-                    D.push(n - y.stopLoss));
-                const
+                const D = R.map((de) => de.bankroll),
                   q = Math.min(...D, n),
                   te = Math.max(...D, n),
                   ue = (te - q) * 0.2 || n * 0.15,
@@ -45544,13 +44631,9 @@ Error generating stack: ` +
                 return {
                   chartMin: we,
                   chartMax: Oe,
-                  // SVG gradients use the plotted area's own bounding box, not
-                  // the padded chart domain. Calculate the split from the real
-                  // bankroll extrema so it lands exactly on the START line.
-                  gradientOffset:
-                    te - q === 0 ? 0.5 : (te - n) / (te - q),
+                  gradientOffset: je === 0 ? 0.5 : (Oe - n) / je,
                 };
-              }, [R, n, y]),
+              }, [R, n]),
               P = (D) => {
                 if (!b || t.length === 0) return;
                 const q = t.length;
@@ -45587,8 +44670,8 @@ Error generating stack: ` +
                           "text-[7px] font-black text-slate-600 uppercase tracking-widest leading-none",
                         children:
                           g === "all"
-                            ? "MC AVG LINE"
-                            : `GAME ${g + 1} / ${t.length}`,
+                            ? "AVERAGE"
+                            : `RUN ${g + 1} / ${t.length}`,
                       }),
                       g !== "all" &&
                         F &&
@@ -45682,8 +44765,8 @@ Error generating stack: ` +
                               "text-[8px] font-black uppercase tracking-widest text-slate-400",
                             children:
                               g === "all"
-                                ? "All Test Runs"
-                                : "Selected Run Breakdown",
+                                ? "Batch Diagnostics"
+                                : "Neural Core Analysis",
                           }),
                         ],
                       }),
@@ -45696,7 +44779,7 @@ Error generating stack: ` +
                               children:
                                 l === "IDLE"
                                   ? p.jsxs("button", {
-                                      onClick: () => f(5),
+                                      onClick: f,
                                       className:
                                         "flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg",
                                       children: [
@@ -45704,7 +44787,7 @@ Error generating stack: ` +
                                           size: 14,
                                           fill: "currentColor",
                                         }),
-                                        "RUN 5",
+                                        "RUN SIMULATION",
                                       ],
                                     })
                                   : p.jsxs(p.Fragment, {
@@ -45781,34 +44864,14 @@ Error generating stack: ` +
                                 y2: "1",
                                 children: [
                                   p.jsx("stop", {
-                                    offset: 0,
-                                    stopColor: "#10b981",
-                                    stopOpacity: 0.58,
-                                  }),
-                                  p.jsx("stop", {
-                                    offset: G / 2,
-                                    stopColor: "#10b981",
-                                    stopOpacity: 0.58,
-                                  }),
-                                  p.jsx("stop", {
                                     offset: G,
                                     stopColor: "#10b981",
-                                    stopOpacity: 0,
+                                    stopOpacity: 0.25,
                                   }),
                                   p.jsx("stop", {
                                     offset: G,
                                     stopColor: "#ef4444",
-                                    stopOpacity: 0,
-                                  }),
-                                  p.jsx("stop", {
-                                    offset: G + (1 - G) / 2,
-                                    stopColor: "#ef4444",
-                                    stopOpacity: 0.58,
-                                  }),
-                                  p.jsx("stop", {
-                                    offset: 1,
-                                    stopColor: "#ef4444",
-                                    stopOpacity: 0.58,
+                                    stopOpacity: 0.25,
                                   }),
                                 ],
                               }),
@@ -45876,56 +44939,11 @@ Error generating stack: ` +
                           }),
                           p.jsx(dj, {
                             y: n,
-                            stroke: "#fcd34d",
-                            strokeWidth: 1.5,
-                            strokeDasharray: "1 5",
-                            strokeLinecap: "round",
-                            strokeOpacity: 0.9,
-                            label: {
-                              position: "insideTopLeft",
-                              value: `START $${n.toLocaleString()}`,
-                              fill: "#fcd34d",
-                              fontSize: M ? 10 : 7,
-                              fontWeight: "900",
-                            },
+                            stroke: "#fbbf24",
+                            strokeWidth: 1,
+                            strokeDasharray: "6 4",
+                            strokeOpacity: 0.4,
                           }),
-                          y &&
-                            y.useTotalProfitGoal &&
-                            y.totalProfitGoal > 0 &&
-                            p.jsx(dj, {
-                              y: n + y.totalProfitGoal,
-                              stroke: "#22c55e",
-                              strokeWidth: 1,
-                              strokeDasharray: "6 4",
-                              strokeOpacity: 0.85,
-                              label: {
-                                position: "insideTopRight",
-                                value: `GOAL $${(
-                                  n + y.totalProfitGoal
-                                ).toLocaleString()}`,
-                                fill: "#22c55e",
-                                fontSize: M ? 10 : 7,
-                                fontWeight: "900",
-                              },
-                            }),
-                          y &&
-                            y.stopLoss > 0 &&
-                            p.jsx(dj, {
-                              y: n - y.stopLoss,
-                              stroke: "#ef4444",
-                              strokeWidth: 1,
-                              strokeDasharray: "6 4",
-                              strokeOpacity: 0.85,
-                              label: {
-                                position: "insideBottomRight",
-                                value: `LOSS $${(
-                                  n - y.stopLoss
-                                ).toLocaleString()}`,
-                                fill: "#ef4444",
-                                fontSize: M ? 10 : 7,
-                                fontWeight: "900",
-                              },
-                            }),
                           I.max &&
                             p.jsx(bv, {
                               x: I.max.spinIndex,
@@ -45961,7 +44979,6 @@ Error generating stack: ` +
                           p.jsx(Dj, {
                             type: "monotone",
                             dataKey: "bankroll",
-                            baseValue: n,
                             stroke: "url(#lineColor)",
                             strokeWidth: 2,
                             fillOpacity: 1,
@@ -46055,7 +45072,7 @@ Error generating stack: ` +
                         p.jsx("span", {
                           children:
                             t.length > 0
-                              ? `${t.length} GAMES RECORDED`
+                              ? `${t.length} SESSIONS RECORDED`
                               : "LIVE SIGNAL",
                         }),
                       ],
@@ -46186,8 +45203,8 @@ Error generating stack: ` +
                             "font-black text-slate-300 uppercase tracking-widest text-[9px]",
                           children: [
                             n === "all"
-                              ? "MONTE CARLO SUMMARY"
-                              : (T == null ? void 0 : T.name) || "TEST RUN",
+                              ? "BATCH SUMMARY"
+                              : (T == null ? void 0 : T.name) || "NODE CASE",
                             e.length > 0 &&
                               p.jsxs("span", {
                                 className: "text-indigo-400 ml-2",
@@ -46655,127 +45672,10 @@ Error generating stack: ` +
             onStopSim: w,
             onTogglePause: _,
             isPaused: S,
-            settings: T,
           }) => {
             const [E, j] = N.useState(!0),
               A = (e.length > 0 ? e[e.length - 1].bankroll : n) - n,
-              C = A >= 0,
-              M = (z, $ = "currency") => {
-                const V = Number(z) || 0;
-                return $ === "percent"
-                  ? V.toFixed(1) + "%"
-                  : $ === "count"
-                    ? Math.round(V).toLocaleString()
-                    : $ === "spins"
-                      ? V.toFixed(1)
-                      : $ === "bankroll"
-                        ? "$" + Math.round(V).toLocaleString()
-                        : (V >= 0 ? "+$" : "-$") +
-                          Math.abs(Math.round(V)).toLocaleString();
-              },
-              z = d
-                ? [
-                    {
-                      label: "Games",
-                      value: d.totalSimulations,
-                      type: "count",
-                      color: "text-indigo-200",
-                    },
-                    {
-                      label: "Win Rate",
-                      value: d.winRate,
-                      type: "percent",
-                      color:
-                        (d.winRate || 0) >= 50
-                          ? "text-emerald-400"
-                          : "text-red-400",
-                    },
-                    {
-                      label: "Avg P/L",
-                      value: d.avgProfit,
-                      color:
-                        (d.avgProfit || 0) >= 0
-                          ? "text-emerald-400"
-                          : "text-red-400",
-                    },
-                    {
-                      label: "Median P/L",
-                      value: d.medianProfit,
-                      color:
-                        (d.medianProfit || 0) >= 0
-                          ? "text-emerald-400"
-                          : "text-red-400",
-                    },
-                    {
-                      label: "Best Run",
-                      value: d.bestProfit,
-                      color: "text-emerald-400",
-                    },
-                    {
-                      label: "Worst Run",
-                      value: d.worstProfit,
-                      color: "text-red-400",
-                    },
-                    {
-                      label: "Avg Draw",
-                      value: -(d.avgMaxDrawdown || 0),
-                      color: "text-orange-400",
-                    },
-                    {
-                      label: "Big Draw",
-                      value: -(d.biggestDrawdown || 0),
-                      color: "text-red-500",
-                    },
-                    {
-                      label: "Goal Hits",
-                      value: d.goalHits,
-                      type: "count",
-                      color: "text-emerald-300",
-                    },
-                    {
-                      label: "Stop Hits",
-                      value: d.stopLossHits,
-                      type: "count",
-                      color: "text-orange-300",
-                    },
-                    {
-                      label: "Busts",
-                      value: d.busts,
-                      type: "count",
-                      color:
-                        (d.busts || 0) > 0
-                          ? "text-red-400"
-                          : "text-slate-300",
-                    },
-                    {
-                      label: "Avg Spins",
-                      value: d.avgSpinsToFinish,
-                      type: "spins",
-                      color: "text-slate-200",
-                    },
-                    {
-                      label: "Avg Wagered",
-                      value: d.avgTotalWagered,
-                      type: "bankroll",
-                      color: "text-slate-200",
-                    },
-                    {
-                      label: "ROI",
-                      value: d.avgRoi,
-                      type: "percent",
-                      color:
-                        (d.avgRoi || 0) >= 0
-                          ? "text-emerald-400"
-                          : "text-red-400",
-                    },
-                    {
-                      label: "P/L Swing",
-                      value: d.profitStdDev,
-                      type: "bankroll",
-                      color: "text-indigo-200",
-                    },
-                  ]
-                : [];
+              C = A >= 0;
             return p.jsx("div", {
               className:
                 "w-full px-2 mb-2 animate-in slide-in-from-top duration-500",
@@ -46799,12 +45699,12 @@ Error generating stack: ` +
                               p.jsx("h3", {
                                 className:
                                   "text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:text-indigo-300 transition-colors",
-                                children: "Run Results",
+                                children: "Analytics Core",
                               }),
                               p.jsxs("span", {
                                 className: `text-[7px] font-bold uppercase tracking-widest transition-colors ${E ? "text-white" : C ? "text-emerald-400" : "text-red-400"}`,
                                 children: [
-                                  "Profit: ",
+                                  "Session: ",
                                   C ? "+" : "",
                                   "$",
                                   A.toLocaleString(),
@@ -46825,36 +45725,9 @@ Error generating stack: ` +
                   }),
                   p.jsx("div", {
                     className: `transition-all duration-300 ${E ? "max-h-[1000px] border-t border-indigo-400/30 opacity-100" : "max-h-0 opacity-0"}`,
-                    children: p.jsxs("div", {
+                    children: p.jsx("div", {
                       className: "p-3 bg-indigo-500/[0.01] space-y-4",
-                      children: [
-                        z.length > 0 &&
-                          p.jsx("div", {
-                            className:
-                              "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-8 gap-2",
-                            children: z.map(($, V) =>
-                              p.jsxs(
-                                "div",
-                                {
-                                  className:
-                                    "bg-black/35 border border-white/5 rounded-lg px-2 py-1.5 min-w-0",
-                                  children: [
-                                    p.jsx("div", {
-                                      className:
-                                        "text-[6px] font-black text-slate-600 uppercase tracking-widest truncate",
-                                      children: $.label,
-                                    }),
-                                    p.jsx("div", {
-                                      className: `text-[10px] font-mono font-black truncate ${$.color}`,
-                                      children: M($.value, $.type),
-                                    }),
-                                  ],
-                                },
-                                V,
-                              ),
-                            ),
-                          }),
-                        p.jsxs("div", {
+                      children: p.jsxs("div", {
                         className:
                           "grid grid-cols-1 lg:grid-cols-12 gap-3 h-[300px]",
                         children: [
@@ -46878,7 +45751,6 @@ Error generating stack: ` +
                               onStopSim: w,
                               onTogglePause: _,
                               isPaused: S,
-                              settings: T,
                             }),
                           }),
                           p.jsx("div", {
@@ -46894,7 +45766,6 @@ Error generating stack: ` +
                           }),
                         ],
                       }),
-                      ],
                     }),
                   }),
                 ],
@@ -47868,7 +46739,7 @@ Error generating stack: ` +
                                     size: 12,
                                     className: "text-purple-400",
                                   }),
-                                  " Drag Board",
+                                  " Drag Workspace",
                                 ],
                               }),
                               p.jsxs("div", {
@@ -47876,7 +46747,7 @@ Error generating stack: ` +
                                   "flex items-center gap-2 text-indigo-400",
                                 children: [
                                   p.jsx(yh, { size: 12 }),
-                                  " Strategy Board",
+                                  " Binary Core Engine",
                                 ],
                               }),
                             ],
@@ -48426,7 +47297,7 @@ Error generating stack: ` +
                                     p.jsx("span", {
                                       className:
                                         "text-sm font-black uppercase tracking-[0.4em]",
-                                      children: "Trigger Rules",
+                                      children: "Engine Calibration",
                                     }),
                                   ],
                                 }),
@@ -48696,13 +47567,13 @@ Error generating stack: ` +
                                               p.jsx("span", {
                                                 className:
                                                   "text-[10px] font-black text-indigo-500 uppercase tracking-[0.5em]",
-                                                children: "Bet Sequence Ready",
+                                                children: "Sequence Validated",
                                               }),
                                               p.jsx("span", {
                                                 className:
                                                   "text-[8px] font-bold text-slate-600 uppercase mt-1",
                                                 children:
-                                                  "Payout Check: 100%",
+                                                  "Integrity Score: 100%",
                                               }),
                                             ],
                                           }),
@@ -48761,12 +47632,12 @@ Error generating stack: ` +
                                 p.jsx("h2", {
                                   className:
                                     "text-xl font-black text-white uppercase tracking-tight",
-                                  children: "Table Settings",
+                                  children: "Global Configuration",
                                 }),
                                 p.jsx("p", {
                                   className:
                                     "text-[7px] font-bold text-slate-500 uppercase tracking-[0.3em]",
-                                  children: "Bankroll & Table Rules",
+                                  children: "Engine Parameters & Physics Rules",
                                 }),
                               ],
                             }),
@@ -48798,7 +47669,7 @@ Error generating stack: ` +
                                   p.jsx("h3", {
                                     className:
                                       "text-xs font-black uppercase tracking-widest",
-                                    children: "Table Rules",
+                                    children: "Table Governance",
                                   }),
                                 ],
                               }),
@@ -49072,7 +47943,7 @@ Error generating stack: ` +
                                   p.jsx("h3", {
                                     className:
                                       "text-xs font-black uppercase tracking-widest",
-                                    children: "Bankroll & Test Size",
+                                    children: "Initial Capital",
                                   }),
                                 ],
                               }),
@@ -49125,7 +47996,7 @@ Error generating stack: ` +
                                               "text-[8px] font-black text-slate-500 uppercase tracking-widest block px-1 flex items-center gap-1.5",
                                             children: [
                                               p.jsx(OT, { size: 10 }),
-                                              " Spins per Game",
+                                              " Spins / Run",
                                             ],
                                           }),
                                           p.jsx("input", {
@@ -49153,7 +48024,7 @@ Error generating stack: ` +
                                               "text-[8px] font-black text-slate-500 uppercase tracking-widest block px-1 flex items-center gap-1.5",
                                             children: [
                                               p.jsx(qo, { size: 10 }),
-                                              " Monte Carlo Runs",
+                                              " Batch Size",
                                             ],
                                           }),
                                           p.jsx("input", {
@@ -49175,104 +48046,6 @@ Error generating stack: ` +
                                       }),
                                     ],
                                   }),
-                                  p.jsxs("div", {
-                                    className:
-                                      "grid grid-cols-2 gap-4 pt-2 border-t border-white/5",
-                                    children: [
-                                      p.jsxs("div", {
-                                        className: "space-y-2",
-                                        children: [
-                                          p.jsxs("label", {
-                                            className:
-                                              "text-[8px] font-black text-slate-500 uppercase tracking-widest block px-1 flex items-center gap-1.5",
-                                            children: [
-                                              p.jsx(yT, { size: 10 }),
-                                              " Stop Loss",
-                                            ],
-                                          }),
-                                          p.jsxs("div", {
-                                            className: "relative",
-                                            children: [
-                                              p.jsx("span", {
-                                                className:
-                                                  "absolute left-3 top-1/2 -translate-y-1/2 text-red-500 font-mono text-xs font-black",
-                                                children: "$",
-                                              }),
-                                              p.jsx("input", {
-                                                type: "number",
-                                                min: "0",
-                                                value: l.stopLoss || 0,
-                                                onChange: (d) =>
-                                                  s({
-                                                    ...l,
-                                                    stopLoss: Math.max(
-                                                      0,
-                                                      Number(d.target.value),
-                                                    ),
-                                                  }),
-                                                className:
-                                                  "w-full bg-black/40 border border-white/10 p-3 pl-8 rounded-xl text-sm font-mono font-black text-white outline-none focus:border-red-500",
-                                                disabled: !f,
-                                              }),
-                                            ],
-                                          }),
-                                          p.jsx("p", {
-                                            className:
-                                              "text-[7px] text-slate-600 font-bold px-1 uppercase",
-                                            children: "0 leaves loss limit off",
-                                          }),
-                                        ],
-                                      }),
-                                      p.jsxs("div", {
-                                        className: "space-y-2",
-                                        children: [
-                                          p.jsxs("label", {
-                                            className:
-                                              "text-[8px] font-black text-slate-500 uppercase tracking-widest block px-1 flex items-center gap-1.5",
-                                            children: [
-                                              p.jsx(xT, { size: 10 }),
-                                              " Profit Goal",
-                                            ],
-                                          }),
-                                          p.jsxs("div", {
-                                            className: "relative",
-                                            children: [
-                                              p.jsx("span", {
-                                                className:
-                                                  "absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500 font-mono text-xs font-black",
-                                                children: "$",
-                                              }),
-                                              p.jsx("input", {
-                                                type: "number",
-                                                min: "0",
-                                                value: l.totalProfitGoal || 0,
-                                                onChange: (d) => {
-                                                  const h = Math.max(
-                                                    0,
-                                                    Number(d.target.value),
-                                                  );
-                                                  s({
-                                                    ...l,
-                                                    totalProfitGoal: h,
-                                                    useTotalProfitGoal: h > 0,
-                                                  });
-                                                },
-                                                className:
-                                                  "w-full bg-black/40 border border-white/10 p-3 pl-8 rounded-xl text-sm font-mono font-black text-white outline-none focus:border-emerald-500",
-                                                disabled: !f,
-                                              }),
-                                            ],
-                                          }),
-                                          p.jsx("p", {
-                                            className:
-                                              "text-[7px] text-slate-600 font-bold px-1 uppercase",
-                                            children:
-                                              "0 leaves profit goal off",
-                                          }),
-                                        ],
-                                      }),
-                                    ],
-                                  }),
                                 ],
                               }),
                             ],
@@ -49288,7 +48061,7 @@ Error generating stack: ` +
                         className:
                           "group flex items-center gap-3 px-12 py-4 bg-white hover:bg-indigo-600 text-black hover:text-white rounded-2xl font-black text-sm uppercase tracking-[0.15em] transition-all duration-300 shadow-xl hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 active:translate-y-0",
                         children: [
-                          "Apply Settings ",
+                          "Commit Parameters ",
                           p.jsx(_T, {
                             size: 18,
                             className:
@@ -49316,16 +48089,16 @@ Error generating stack: ` +
             "#84cc16",
           ],
           pE = [
-            "Table Run",
-            "Bankroll Test",
-            "Column Test",
-            "Dozen Test",
-            "Inside Bet",
-            "Outside Bet",
-            "Split Test",
-            "Street Test",
-            "Progression",
-            "Flat Bet",
+            "Logic",
+            "Phantom",
+            "Strike",
+            "Nexus",
+            "Edge",
+            "Void",
+            "Alpha",
+            "Omega",
+            "Vortex",
+            "Crest",
           ],
           tq = (() => {
             const e = [
@@ -49554,78 +48327,6 @@ Error generating stack: ` +
                     ),
                   ],
                   settings: h(),
-                  rules: m,
-                },
-              },
-              {
-                id: "preset_builtin_black_winner_peeler",
-                name: "The Black Winner Peeler",
-                builtIn: !0,
-                data: {
-                  name: "The Black Winner Peeler",
-                  lanes: [
-                    {
-                      id: "lane-1",
-                      name: "Black Winner Peeler",
-                      color: "#111827",
-                      bets: [
-                        {
-                          id: "bwp-black-outside",
-                          placement: {
-                            type: U.BLACK,
-                            numbers: t,
-                            displayName: "Black",
-                          },
-                          amount: 3,
-                        },
-                        ...t.map((g) => ({
-                          id: `bwp-black-${g}`,
-                          placement: {
-                            type: U.STRAIGHT_UP,
-                            numbers: [g],
-                            displayName: String(g),
-                          },
-                          amount: 1,
-                        })),
-                        {
-                          id: "bwp-zero",
-                          placement: {
-                            type: U.STRAIGHT_UP,
-                            numbers: [0],
-                            displayName: "0",
-                          },
-                          amount: 2,
-                        },
-                        {
-                          id: "bwp-double-zero",
-                          placement: {
-                            type: U.STRAIGHT_UP,
-                            numbers: [-1],
-                            displayName: "00",
-                          },
-                          amount: 2,
-                        },
-                      ],
-                      triggerBets: [],
-                      config: f({
-                        strategyMode: "BLACK_WINNER_PEELER",
-                        baseUnit: 1,
-                        onWinAction: re.DO_NOTHING,
-                        onWinValue: 0,
-                        onLossAction: re.ADD_UNITS,
-                        onLossValue: 1,
-                        blackPeelerLossUnit: 1,
-                        blackPeelerPeakResetStep: 50,
-                        blackPeelerPeelResetCount: 6,
-                        blackPeelerRedSitOut: !0,
-                      }),
-                      enabled: !0,
-                    },
-                  ],
-                  settings: h({
-                    startingBankroll: 1e3,
-                    spinsPerSimulation: 500,
-                  }),
                   rules: m,
                 },
               },
@@ -51158,157 +49859,6 @@ Error generating stack: ` +
                   rules: m,
                 }))(),
               },
-              {
-                id: "preset_builtin_money_slide",
-                name: "Money Slide",
-                builtIn: !0,
-                data: {
-                  name: "Money Slide",
-                  lanes: [
-                    {
-                      id: "money-slide-lane",
-                      name: "Money Slide",
-                      color: "#22c55e",
-                      bets: [
-                        {
-                          id: "money-slide-column-1",
-                          placement: {
-                            type: U.COLUMN_1ST,
-                            numbers: [
-                              1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34,
-                            ],
-                            displayName: "Column 1",
-                          },
-                          amount: 3,
-                        },
-                        {
-                          id: "money-slide-column-2",
-                          placement: {
-                            type: U.COLUMN_2ND,
-                            numbers: [
-                              2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35,
-                            ],
-                            displayName: "Column 2",
-                          },
-                          amount: 3,
-                        },
-                        {
-                          id: "money-slide-straight-1",
-                          placement: {
-                            type: U.STRAIGHT_UP,
-                            numbers: [1],
-                            displayName: "1",
-                          },
-                          amount: 1,
-                        },
-                        {
-                          id: "money-slide-straight-2",
-                          placement: {
-                            type: U.STRAIGHT_UP,
-                            numbers: [2],
-                            displayName: "2",
-                          },
-                          amount: 1,
-                        },
-                      ],
-                      triggerBets: [],
-                      config: f({
-                        strategyMode: "MONEY_SLIDE",
-                        baseUnit: 1,
-                        gateBaseBets: !1,
-                        onWinAction: re.DO_NOTHING,
-                        onWinValue: 0,
-                        onLossAction: re.DO_NOTHING,
-                        onLossValue: 0,
-                        onWinStipType: "NONE",
-                        onLossStipType: "NONE",
-                      }),
-                      enabled: !0,
-                    },
-                  ],
-                  settings: h({
-                    startingBankroll: 1e3,
-                    spinsPerSimulation: 500,
-                    numberOfSimulations: 5,
-                    batchName: "Money Slide",
-                  }),
-                  rules: {
-                    ...m,
-                    maxInsideBet: 500,
-                    maxDozenColumn: 500,
-                  },
-                },
-              },
-              {
-                id: "preset_builtin_money_slide_2",
-                name: "Money Slide 2",
-                builtIn: !0,
-                data: {
-                  name: "Money Slide 2",
-                  lanes: [
-                    {
-                      id: "money-slide-2-lane",
-                      name: "Money Slide 2",
-                      color: "#facc15",
-                      bets: [
-                        {
-                          id: "money-slide-2-straight-1",
-                          placement: {
-                            type: U.STRAIGHT_UP,
-                            numbers: [1],
-                            displayName: "1",
-                          },
-                          amount: 1,
-                        },
-                        {
-                          id: "money-slide-2-straight-2",
-                          placement: {
-                            type: U.STRAIGHT_UP,
-                            numbers: [2],
-                            displayName: "2",
-                          },
-                          amount: 1,
-                        },
-                        {
-                          id: "money-slide-2-zero-split",
-                          placement: {
-                            type: U.SPLIT,
-                            numbers: [-1, 0],
-                            displayName: "Split 0/00",
-                          },
-                          amount: 1,
-                        },
-                      ],
-                      triggerBets: [],
-                      config: f({
-                        strategyMode: "MONEY_SLIDE",
-                        moneySlideZeroSplit: !0,
-                        moneySlideResetOnAnyWin: !0,
-                        baseUnit: 1,
-                        gateBaseBets: !1,
-                        onWinAction: re.DO_NOTHING,
-                        onWinValue: 0,
-                        onLossAction: re.DO_NOTHING,
-                        onLossValue: 0,
-                        onWinStipType: "NONE",
-                        onLossStipType: "NONE",
-                      }),
-                      enabled: !0,
-                    },
-                  ],
-                  settings: h({
-                    startingBankroll: 1e3,
-                    spinsPerSimulation: 500,
-                    numberOfSimulations: 5,
-                    batchName: "Money Slide 2",
-                  }),
-                  rules: {
-                    ...m,
-                    maxInsideBet: 500,
-                    maxDozenColumn: 500,
-                  },
-                },
-              },
             ];
           })(),
           Rv = () => ({
@@ -51411,7 +49961,7 @@ Error generating stack: ` +
                 },
               ]),
               [ce, St] = N.useState("lane-1"),
-              [Re, dt] = N.useState("Roulette Strategy 1"),
+              [Re, dt] = N.useState("Phantom Logic Alpha"),
               [Bt, ar] = N.useState([]),
               [ma, kn] = N.useState([]),
               [to, ir] = N.useState([]),
@@ -51479,7 +50029,10 @@ Error generating stack: ` +
                 ve && h(JSON.parse(ve));
                 try {
                   const me = localStorage.getItem(Pv);
-                  me && G(JSON.parse(me));
+                  if (me) {
+                    const Ze = JSON.parse(me);
+                    G(Array.isArray(Ze) ? Ze : []);
+                  } else G([]);
                 } catch {
                   G([]);
                 }
@@ -51487,31 +50040,37 @@ Error generating stack: ` +
               ao = [...tq, ...se],
               io = (ee) => {
                 var fe, ve;
-                if (je === "IDLE")
-                  try {
-                    const me = ee.data;
-                    (me.lanes &&
-                      (Ae(me.lanes),
-                      St(
-                        ((fe = me.lanes[0]) == null ? void 0 : fe.id) ||
-                          "lane-1",
-                      )),
-                      me.settings && ue(me.settings),
-                      me.rules && te(me.rules),
-                      kn([]),
-                      ir([]),
-                      Oe(
-                        ((ve = me.settings) == null
-                          ? void 0
-                          : ve.startingBankroll) || 1e3,
-                      ),
-                      dt(me.name || ee.name),
-                      Vr("all"),
-                      Wr(null),
-                      z(null));
-                  } catch (me) {
-                    console.error("Failed to load preset", me);
+                if (je !== "IDLE") return;
+                try {
+                  const me = ee && ee.data ? ee.data : ee;
+                  if (!me) return;
+                  const Ze = Array.isArray(me.lanes) ? JSON.parse(JSON.stringify(me.lanes)) : [];
+                  if (Ze.length > 0) {
+                    Ae(Ze);
+                    St(((fe = Ze[0]) == null ? void 0 : fe.id) || "lane-1");
                   }
+                  const gt = me.settings ? { ...ae, ...me.settings } : ae;
+                  const Tt = me.rules ? { ...q, ...me.rules } : q;
+                  me.settings && ue(gt);
+                  me.rules && te(Tt);
+                  kn([]);
+                  ir([]);
+                  Oe(((ve = gt) == null ? void 0 : ve.startingBankroll) || ae.startingBankroll || 1e3);
+                  dt(me.name || (ee && ee.name) || Re || "Preset Strategy");
+                  Vr("all");
+                  Wr(null);
+                  z(null);
+                } catch (me) {
+                  console.error("Failed to load preset", me);
+                  alert("Could not load that preset. The preset vault was repaired, so try opening PRESETS again.");
+                  try {
+                    const Ze = localStorage.getItem(Pv);
+                    if (Ze) {
+                      const gt = JSON.parse(Ze);
+                      G(Array.isArray(gt) ? gt : []);
+                    }
+                  } catch {}
+                }
               },
               ga = (ee) => {
                 const fe = {
@@ -51538,16 +50097,6 @@ Error generating stack: ` +
                 const fe = se.filter((ve) => ve.id !== ee);
                 (G(fe), localStorage.setItem(Pv, JSON.stringify(fe)));
               };
-            try {
-              window.PhantomPresetAPI = {
-                getPresets: () => ao,
-                loadPreset: (ee) => io(ee),
-                saveAsPreset: (ee) => ga(ee),
-                deletePreset: (ee) => lo(ee),
-                refreshPresets: () => ro(),
-                getStatus: () => je
-              };
-            } catch (ee) {}
             N.useEffect(() => {
               ro();
             }, []);
@@ -51679,17 +50228,8 @@ Error generating stack: ` +
                     : ee.settings.startingBankroll;
                 (Oe(fe), dt(ee.name), Vr("all"), s(!1));
               },
-              Xf = async (requestedRuns) => {
+              Xf = async () => {
                 var ve, me;
-                const requestedRunCount = Math.max(
-                  1,
-                  Math.min(
-                    5e4,
-                    Number(requestedRuns) ||
-                      Number(ae.numberOfSimulations) ||
-                      5,
-                  ),
-                );
                 (de("RUNNING"),
                   Wr(null),
                   ir([]),
@@ -51715,11 +50255,10 @@ Error generating stack: ` +
                     yt = 0,
                     Mn = 0,
                     nt = [],
-                    Nr = [],
-                    runSummaries = [];
+                    Nr = [];
                   for (
                     let ln = 0;
-                    ln < requestedRunCount && !fe.signal.aborted;
+                    ln < ae.numberOfSimulations && !fe.signal.aborted;
                     ln++
                   ) {
                     let _t = ae.startingBankroll,
@@ -51745,14 +50284,9 @@ Error generating stack: ` +
                         eliminationPausedIds: [],
                         currentBandZone: 0,
                         peakSessionBankroll: 0,
-                        moneySlideStep: 0,
                         shiftingDozensStep: 0,
                         shiftingDozensEmptyIdx: 2,
                         singleDozenStep: 0,
-                        blackPeelerSitOut: !1,
-                        blackPeelerPendingRedIncrease: !1,
-                        blackPeelerLossUnits: 0,
-                        blackPeelerLastResetProfit: 0,
                       })),
                       Jf = Ze.map((Ut) => ({
                         laneId: Ut.id,
@@ -51781,8 +50315,6 @@ Error generating stack: ` +
                         break;
                       }
                       if (
-                        (ae.stopLoss > 0 &&
-                          _t <= ae.startingBankroll - ae.stopLoss) ||
                         (ae.useTotalProfitGoal &&
                           _t >= ae.startingBankroll + ae.totalProfitGoal) ||
                         (ge.current &&
@@ -51852,12 +50384,6 @@ Error generating stack: ` +
                           (bt) =>
                             bt.triggerBets.some((qn) => qn.active) &&
                             !bt.isTriggered,
-                        ) &&
-                        !Fi.some(
-                          (bt) =>
-                            bt.config.strategyMode ===
-                              "BLACK_WINNER_PEELER" &&
-                            bt.blackPeelerSitOut,
                         )
                       ) {
                         if (
@@ -51926,7 +50452,7 @@ Error generating stack: ` +
                           bets: Ji,
                           wasReset: Ys,
                         }),
-                        requestedRunCount === 1 || D.current !== "FAST")
+                        ae.numberOfSimulations === 1 || D.current !== "FAST")
                       ) {
                         (kn([...lr]), Oe(_t), Fa > 0 && t((bt) => bt + 1));
                         const Ie =
@@ -51942,40 +50468,7 @@ Error generating stack: ` +
                           break;
                       }
                     }
-                    let runPeak = ae.startingBankroll,
-                      runTrough = ae.startingBankroll,
-                      runMaxDrawdown = 0,
-                      runTotalWagered = 0;
-                    lr.forEach((Ut) => {
-                      ((runTotalWagered += Ut.betAmount || 0),
-                        Ut.bankroll > runPeak && (runPeak = Ut.bankroll),
-                        Ut.bankroll < runTrough && (runTrough = Ut.bankroll));
-                      const Qi = runPeak - Ut.bankroll;
-                      Qi > runMaxDrawdown && (runMaxDrawdown = Qi);
-                    });
-                    const runSummary = {
-                      finalBalance: _t,
-                      profit: _t - ae.startingBankroll,
-                      spins: lr.length,
-                      peak: runPeak,
-                      trough: runTrough,
-                      maxDrawdown: runMaxDrawdown,
-                      totalWagered: runTotalWagered,
-                      roi:
-                        ((_t - ae.startingBankroll) /
-                          (runTotalWagered || 1)) *
-                        100,
-                      hitGoal:
-                        ae.useTotalProfitGoal &&
-                        ae.totalProfitGoal > 0 &&
-                        _t >= ae.startingBankroll + ae.totalProfitGoal,
-                      hitStopLoss:
-                        ae.stopLoss > 0 &&
-                        _t <= ae.startingBankroll - ae.stopLoss,
-                      busted: _t <= 0,
-                    };
                     (gt.push(_t),
-                      runSummaries.push(runSummary),
                       (Mn += lr.length),
                       _t > ae.startingBankroll
                         ? Tt++
@@ -51986,7 +50479,6 @@ Error generating stack: ` +
                         name: `${pE[Math.floor(Math.random() * pE.length)]} ${ln + 1}`,
                         history: [...lr],
                         finalBalance: _t,
-                        stats: runSummary,
                         timestamp: Date.now(),
                       }));
                   }
@@ -51994,76 +50486,15 @@ Error generating stack: ` +
                     (de("IDLE"), x(!1));
                     return;
                   }
-                  const runCount = runSummaries.length || 1,
-                    avgFinalBankroll =
-                      gt.reduce((ln, _t) => ln + _t, 0) / runCount,
-                    avgProfit = avgFinalBankroll - ae.startingBankroll,
-                    sortedProfits = runSummaries
-                      .map((ln) => ln.profit)
-                      .sort((ln, _t) => ln - _t),
-                    medianProfit =
-                      sortedProfits.length === 0
-                        ? 0
-                        : sortedProfits.length % 2
-                          ? sortedProfits[
-                              Math.floor(sortedProfits.length / 2)
-                            ]
-                          : (sortedProfits[sortedProfits.length / 2 - 1] +
-                              sortedProfits[sortedProfits.length / 2]) /
-                            2,
-                    avgTotalWagered =
-                      runSummaries.reduce(
-                        (ln, _t) => ln + _t.totalWagered,
-                        0,
-                      ) / runCount,
-                    profitStdDev = Math.sqrt(
-                      runSummaries.reduce(
-                        (ln, _t) =>
-                          ln + Math.pow(_t.profit - avgProfit, 2),
-                        0,
-                      ) / runCount,
-                    ),
-                    Gs = {
-                      totalSimulations: runSummaries.length,
+                  const Gs = {
+                    totalSimulations: ae.numberOfSimulations,
                     wins: Tt,
                     losses: yt,
-                    pushes: runSummaries.length - Tt - yt,
-                    winRate: (Tt / runCount) * 100,
-                    lossRate: (yt / runCount) * 100,
-                    avgFinalBankroll,
-                    avgProfit,
-                    medianProfit,
+                    avgFinalBankroll:
+                      gt.reduce((ln, _t) => ln + _t, 0) / (gt.length || 1),
                     bestRun: Math.max(...gt, ae.startingBankroll),
                     worstRun: Math.min(...gt, ae.startingBankroll),
-                    bestProfit:
-                      Math.max(...gt, ae.startingBankroll) -
-                      ae.startingBankroll,
-                    worstProfit:
-                      Math.min(...gt, ae.startingBankroll) -
-                      ae.startingBankroll,
-                    avgSpinsToFinish: Mn / runCount,
-                    avgMaxDrawdown:
-                      runSummaries.reduce(
-                        (ln, _t) => ln + _t.maxDrawdown,
-                        0,
-                      ) / runCount,
-                    biggestDrawdown: Math.max(
-                      ...runSummaries.map((ln) => ln.maxDrawdown),
-                      0,
-                    ),
-                    avgTotalWagered,
-                    avgRoi: (avgProfit / (avgTotalWagered || 1)) * 100,
-                    goalHits: runSummaries.filter((ln) => ln.hitGoal).length,
-                    stopLossHits: runSummaries.filter((ln) => ln.hitStopLoss)
-                      .length,
-                    busts: runSummaries.filter((ln) => ln.busted).length,
-                    avgPeak:
-                      runSummaries.reduce((ln, _t) => ln + _t.peak, 0) /
-                      runCount,
-                    avgTrough:
-                      runSummaries.reduce((ln, _t) => ln + _t.trough, 0) /
-                      runCount,
-                    profitStdDev,
+                    avgSpinsToFinish: Mn / (gt.length || 1),
                   };
                   (kn(nt),
                     ir(Nr),
@@ -52077,15 +50508,10 @@ Error generating stack: ` +
                     id: `report-${Date.now()}`,
                     name:
                       ae.batchName ||
-                      `Roulette Test ${new Date().toLocaleTimeString()}`,
+                      `Batch ${new Date().toLocaleTimeString()}`,
                     timestamp: Date.now(),
                     stats: Gs,
-                    settings: JSON.parse(
-                      JSON.stringify({
-                        ...ae,
-                        numberOfSimulations: requestedRunCount,
-                      }),
-                    ),
+                    settings: JSON.parse(JSON.stringify(ae)),
                     lanes: JSON.parse(JSON.stringify(he)),
                     rules: JSON.parse(JSON.stringify(q)),
                     history: nt,
@@ -52468,7 +50894,6 @@ Error generating stack: ` +
                           onUpdateConfig: (ee) =>
                             yn((fe) => ({ ...fe, config: ee })),
                           onQuickBetAction: $t,
-                          startingBankroll: ae.startingBankroll,
                         }),
                         p.jsx(ZH, {
                           activeLane: At,
@@ -52531,7 +50956,6 @@ Error generating stack: ` +
                           onStopSim: Xa,
                           onTogglePause: () => C(!A),
                           isPaused: A,
-                          settings: ae,
                         }),
                         p.jsx("div", {
                           className: `w-full px-2 mb-2 animate-in slide-in-from-bottom duration-500 overflow-hidden transition-all ${j ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"}`,
@@ -52547,7 +50971,7 @@ Error generating stack: ` +
                                   p.jsx("h3", {
                                     className:
                                       "text-[10px] font-black uppercase tracking-widest",
-                                    children: "Bet Sizing",
+                                    children: "Global Engine Tuning",
                                   }),
                                 ],
                               }),
@@ -52565,7 +50989,7 @@ Error generating stack: ` +
                                           className:
                                             "text-[8px] font-black text-slate-500 uppercase tracking-widest",
                                           children:
-                                            "Base Bet Unit",
+                                            "Node Intensity (Global Floor)",
                                         }),
                                         p.jsxs("div", {
                                           className: "flex items-center gap-4",
@@ -52617,7 +51041,7 @@ Error generating stack: ` +
                                           className:
                                             "text-[8px] font-black text-slate-600 uppercase tracking-widest",
                                           children:
-                                            "Applies to this roulette test",
+                                            "Hardware localized to Phantom Core",
                                         }),
                                       ],
                                     }),
@@ -52723,7 +51147,7 @@ Error generating stack: ` +
                                 p.jsx("h3", {
                                   className:
                                     "text-sm font-black text-white uppercase tracking-tight",
-                                  children: "Test Run Blocked",
+                                  children: "Simulation Blocked",
                                 }),
                                 p.jsx("p", {
                                   className:
@@ -52825,7 +51249,7 @@ Error generating stack: ` +
                               onClick: () => Xi("cancel"),
                               className:
                                 "w-full px-5 py-2.5 bg-red-600/80 hover:bg-red-500 border border-red-500/50 rounded-xl text-[9px] font-black text-white uppercase tracking-widest transition-all shadow-lg shadow-red-900/30 active:scale-95",
-                              children: "Cancel Test",
+                              children: "Cancel Simulation",
                             }),
                           ],
                         }),
@@ -53233,7 +51657,7 @@ Error generating stack: ` +
                             p.jsx("p", {
                               className:
                                 "text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1",
-                              children: "Practice Bankroll",
+                              children: "Sandbox Balance",
                             }),
                             p.jsxs("p", {
                               className:
@@ -53659,7 +52083,7 @@ Error generating stack: ` +
                 '<div>' +
                   '<p class="soulman-help-kicker">Soulman Strategy Builder</p>' +
                   '<h2 id="soulman-help-title" class="soulman-help-title">How to build, preview, and run a strategy</h2>' +
-                  '<p class="soulman-help-subtitle">This screen is for designing roulette betting lanes, seeing the next bet on the table, and then running clean roulette tests from the beginning of the strategy.</p>' +
+                  '<p class="soulman-help-subtitle">This screen is for designing roulette betting lanes, seeing the next bet on the table, and then running clean simulations from the beginning of the strategy.</p>' +
                 '</div>' +
                 '<div class="soulman-help-actions">' +
                   '<button id="soulman-help-maximize" class="soulman-help-action" type="button" aria-label="Maximize help window">Max</button>' +
@@ -53675,7 +52099,7 @@ Error generating stack: ` +
                       '<li>Use the roulette table to place the bet spots for that lane.</li>' +
                       '<li>Set how the lane reacts after a win, loss, or push.</li>' +
                       '<li>Use the preview buttons to step through the progression and watch the next bet appear on the display table.</li>' +
-                      '<li>Run the roulette test when ready. The test starts from the real beginning, not from the preview steps.</li>' +
+                      '<li>Run the simulation when ready. The simulation starts from the real beginning, not from the preview steps.</li>' +
                     '</ol>' +
                   '</section>' +
                   '<section class="soulman-help-section">' +
@@ -53707,11 +52131,11 @@ Error generating stack: ` +
                     '</ul>' +
                   '</section>' +
                   '<section class="soulman-help-section">' +
-                    '<h3>Roulette Test</h3>' +
-                    '<p>The roulette test uses the saved strategy, bankroll, spin count, and table settings. Manual preview clicks do not change the test start, bankroll start, saved preset, or real lane state.</p>' +
+                    '<h3>Simulation</h3>' +
+                    '<p>Simulation uses the saved strategy, bankroll, spin count, and session settings. Manual preview clicks do not change the sim start, bankroll start, saved preset, or real lane state.</p>' +
                     '<div class="soulman-help-pill-row">' +
                       '<span class="soulman-help-pill">Preview = fake clone</span>' +
-                      '<span class="soulman-help-pill">Test run = real start</span>' +
+                      '<span class="soulman-help-pill">Simulation = real start</span>' +
                       '<span class="soulman-help-pill">Reset = clean table</span>' +
                     '</div>' +
                   '</section>' +
@@ -53721,7 +52145,7 @@ Error generating stack: ` +
                     '<p>Use Reset Preview before doing more real table editing so you know you are back on the actual starting bet.</p>' +
                   '</section>' +
                 '</div>' +
-                '<div class="soulman-help-warning"><b>Important:</b> The manual Win/Loss/Push tester is only a practice display. It uses a cloned preview state, so the next real roulette test still starts from the beginning of the strategy.</div>' +
+                '<div class="soulman-help-warning"><b>Important:</b> The manual Win/Loss/Push tester is only a practice display. It uses a cloned preview state, so the next real simulation still starts from the beginning of the strategy.</div>' +
               '</div>' +
               '<div class="soulman-help-footer">' +
                 '<span class="soulman-help-note">Tip: click the gold ? button anytime to open this guide again. Press Esc to close.</span>' +
@@ -53767,9 +52191,7 @@ Error generating stack: ` +
             if (event.key === 'Escape' && !modal.classList.contains('soulman-help-hidden')) closeHelp();
             if (event.key === '?' && modal.classList.contains('soulman-help-hidden')) openHelp();
           });
-          // Start on the usable builder screen. The gold ? button still opens
-          // this guide whenever it is needed.
-          closeHelp();
+          openHelp();
         });
       })();
     </script>
@@ -53869,17 +52291,11 @@ Error generating stack: ` +
           [audioA, audioB].forEach(function (audio) {
             if (!audio) return;
             audio.src = src;
-            audio.preload = audio === activeAudio ? 'metadata' : 'none';
+            audio.preload = 'auto';
             audio.loop = false;
             audio.volume = BASE_VOLUME;
             audio.muted = muted;
           });
-        }
-
-        function warmStandbyAudio() {
-          if (!standbyAudio) return;
-          standbyAudio.preload = 'auto';
-          try { standbyAudio.load(); } catch (error) {}
         }
 
         function buildAudio() {
@@ -53966,9 +52382,6 @@ Error generating stack: ` +
             var duration = activeAudio.duration;
             if (!isFinite(duration) || duration <= 0) return;
             var fadeSeconds = getFadeSeconds(duration);
-            if (activeAudio.currentTime >= Math.max(0, duration - fadeSeconds - 8)) {
-              warmStandbyAudio();
-            }
             if (activeAudio.currentTime >= Math.max(0, duration - fadeSeconds)) {
               crossfadeToStandby(fadeSeconds);
             }
@@ -53989,8 +52402,6 @@ Error generating stack: ` +
             return Promise.resolve(false);
           }
           startedOnce = true;
-          activeAudio.preload = 'auto';
-          try { activeAudio.load(); } catch (error) {}
           activeAudio.muted = false;
           activeAudio.volume = BASE_VOLUME;
           return activeAudio.play().then(function () {
@@ -54010,7 +52421,6 @@ Error generating stack: ` +
         function crossfadeToStandby(fadeSeconds) {
           if (!activeAudio || !standbyAudio || fading) return;
           fading = true;
-          warmStandbyAudio();
           try { standbyAudio.currentTime = 0; } catch (error) {}
           standbyAudio.muted = muted;
           standbyAudio.volume = 0;
@@ -54204,9 +52614,7 @@ Error generating stack: ` +
         pointer-events: none !important;
       }
     </style>
-    <!-- Disabled: its MutationObserver rewrote the same class/style attributes it
-         observed, creating an infinite callback loop that froze the builder. -->
-    <script type="application/json" id="soulman-builder-no-hand-cursor-script-disabled">
+    <script id="soulman-builder-no-hand-cursor-script">
       (function(){
         'use strict';
         var selectors = [
@@ -54289,355 +52697,6 @@ Error generating stack: ` +
         try {
           new MutationObserver(hideEverywhere).observe(document.documentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['class','style','src'] });
         } catch(e) {}
-      })();
-    </script>
-
-  
-
-    <script type="application/json" id="soulman-presets-hard-fix-disabled">
-      (function(){
-        "use strict";
-        if (window.__SOULMAN_PRESETS_HARD_FIX__) return;
-        window.__SOULMAN_PRESETS_HARD_FIX__ = true;
-
-        var PANEL_ID = "soulmanPresetHardPanel";
-        var BACKDROP_ID = "soulmanPresetHardBackdrop";
-        var BUTTON_ID = "soulmanPresetHardButton";
-        var STORAGE_KEY = "phantom_user_presets";
-        var lastOpenAt = 0;
-        var retryTimer = null;
-
-        function safeText(value) {
-          return String(value == null ? "" : value).replace(/[&<>\"]/g, function(ch){
-            return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch] || ch;
-          });
-        }
-        function css(el, styles) {
-          for (var k in styles) if (Object.prototype.hasOwnProperty.call(styles, k)) el.style[k] = styles[k];
-          return el;
-        }
-        function node(tag, text) {
-          var el = document.createElement(tag);
-          if (text != null) el.textContent = text;
-          return el;
-        }
-        function normalizeVault(value) {
-          var list = [];
-          if (Array.isArray(value)) list = value;
-          else if (value && typeof value === "object") list = [value];
-          return list.filter(function(p){ return p && typeof p === "object"; }).map(function(p, index){
-            if (p.data && (p.data.lanes || p.data.settings || p.data.rules)) {
-              if (!p.id) p.id = "preset_repaired_" + index;
-              if (!p.name) p.name = (p.data && p.data.name) || "Recovered Preset";
-              return p;
-            }
-            if (p.lanes || p.settings || p.rules) {
-              return {
-                id: p.id || "preset_repaired_direct_" + index,
-                name: p.name || "Recovered Preset",
-                builtIn: !!p.builtIn,
-                data: p
-              };
-            }
-            return null;
-          }).filter(Boolean);
-        }
-        function readStoragePresets() {
-          try {
-            var raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) return [];
-            var list = normalizeVault(JSON.parse(raw));
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-            return list;
-          } catch (e) {
-            console.warn("[Soulman Presets] preset vault repair failed", e);
-            try { localStorage.removeItem(STORAGE_KEY); } catch(err) {}
-            return [];
-          }
-        }
-        function api() { return window.PhantomPresetAPI || null; }
-        function getPresets() {
-          var list = [];
-          var live = api();
-          try {
-            if (live && typeof live.getPresets === "function") list = normalizeVault(live.getPresets() || []);
-          } catch(e) { list = []; }
-          var stored = readStoragePresets();
-          var byId = {};
-          list.concat(stored).forEach(function(p){
-            var id = (p && (p.id || (p.data && p.data.id) || p.name)) || ("preset_" + Math.random());
-            if (p && !byId[id]) byId[id] = p;
-          });
-          return Object.keys(byId).map(function(id){ return byId[id]; });
-        }
-        function presetName(p) { return (p && (p.name || (p.data && p.data.name))) || "Unnamed Preset"; }
-        function removePanel() {
-          var p = document.getElementById(PANEL_ID); if (p) p.remove();
-          var b = document.getElementById(BACKDROP_ID); if (b) b.remove();
-          if (retryTimer) { clearInterval(retryTimer); retryTimer = null; }
-        }
-        function refreshOriginalButtons() {
-          try {
-            document.querySelectorAll("button").forEach(function(btn){
-              var txt = (btn.textContent || "").replace(/\s+/g," ").trim().toUpperCase();
-              if (txt === "PRESETS" || /(^|\s)PRESETS($|\s)/.test(txt)) {
-                btn.disabled = false;
-                btn.style.pointerEvents = "auto";
-                btn.style.position = btn.style.position || "relative";
-                btn.style.zIndex = "2147483000";
-                btn.setAttribute("data-soulman-presets-fixed", "1");
-              }
-            });
-          } catch(e) {}
-        }
-        function loadPreset(preset) {
-          var live = api();
-          if (!live || typeof live.loadPreset !== "function") {
-            alert("Preset engine is still starting. Tap PRESETS again in a second.");
-            return;
-          }
-          try {
-            live.loadPreset(preset);
-            removePanel();
-            toast("Preset loaded: " + presetName(preset));
-          } catch (e) {
-            console.error("[Soulman Presets] load failed", e);
-            alert("Could not load that preset. Stop any running test, refresh, then try again.");
-          }
-        }
-        function toast(message) {
-          var old = document.getElementById("soulmanPresetToast"); if (old) old.remove();
-          var t = css(node("div", message), {
-            position:"fixed", left:"50%", top:"18px", transform:"translateX(-50%)", zIndex:"2147483647",
-            background:"rgba(15,23,42,.96)", color:"#fcd34d", border:"1px solid rgba(251,191,36,.35)",
-            borderRadius:"999px", padding:"8px 12px", font:"900 11px system-ui,-apple-system,sans-serif", letterSpacing:".08em",
-            boxShadow:"0 14px 40px rgba(0,0,0,.55)", pointerEvents:"none", textTransform:"uppercase"
-          });
-          t.id = "soulmanPresetToast";
-          document.body.appendChild(t);
-          setTimeout(function(){ try { t.remove(); } catch(e){} }, 1600);
-        }
-        function renderList(listEl) {
-          listEl.innerHTML = "";
-          var presets = getPresets();
-          var liveReady = !!(api() && typeof api().loadPreset === "function");
-          if (!liveReady) {
-            var loading = css(node("div", "Preset engine is loading. This panel will retry automatically."), {
-              padding:"14px", textAlign:"center", color:"#cbd5e1", fontSize:"12px", fontWeight:"700", lineHeight:"1.35"
-            });
-            listEl.appendChild(loading);
-          }
-          if (!presets.length) {
-            var empty = css(node("div", "No presets found yet."), {
-              padding:"18px", textAlign:"center", color:"#94a3b8", fontSize:"11px", fontWeight:"900", letterSpacing:".08em", textTransform:"uppercase"
-            });
-            listEl.appendChild(empty);
-            return;
-          }
-          presets.forEach(function(preset){
-            var row = css(document.createElement("div"), {display:"flex", alignItems:"stretch", gap:"6px", marginBottom:"6px"});
-            var btn = css(document.createElement("button"), {
-              flex:"1", textAlign:"left", padding:"11px", borderRadius:"12px", border:"1px solid rgba(255,255,255,.10)",
-              background:"rgba(255,255,255,.055)", color:"#e2e8f0", cursor:"pointer", minHeight:"48px", pointerEvents:"auto"
-            });
-            btn.innerHTML = '<div style="font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + safeText(presetName(preset)) + '</div>' +
-              '<div style="font-size:8px;font-weight:900;letter-spacing:.14em;color:' + (preset && preset.builtIn ? '#f59e0b' : '#818cf8') + ';margin-top:3px;text-transform:uppercase;">' + (preset && preset.builtIn ? 'Built-in' : 'Custom') + '</div>';
-            btn.addEventListener("pointerdown", function(e){ e.stopPropagation(); }, true);
-            function choosePreset(e) {
-              if (e) { e.preventDefault(); e.stopPropagation(); }
-              if (btn.__soulmanChoosingPreset) return;
-              btn.__soulmanChoosingPreset = true;
-              setTimeout(function(){ btn.__soulmanChoosingPreset = false; }, 350);
-              loadPreset(preset);
-            }
-            btn.onclick = choosePreset;
-            btn.addEventListener("click", choosePreset, true);
-            btn.addEventListener("pointerup", choosePreset, true);
-            row.appendChild(btn);
-            if (preset && !preset.builtIn) {
-              var del = css(node("button", "🗑"), {width:"42px", borderRadius:"12px", border:"1px solid rgba(248,113,113,.22)", background:"rgba(248,113,113,.10)", color:"#fecaca", cursor:"pointer"});
-              del.title = "Delete custom preset";
-              del.addEventListener("click", function(e){
-                e.preventDefault(); e.stopPropagation();
-                if (!confirm("Delete this custom preset?")) return;
-                var live = api();
-                try {
-                  if (live && typeof live.deletePreset === "function") live.deletePreset(preset.id);
-                  var stored = readStoragePresets().filter(function(p){ return p.id !== preset.id; });
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
-                  renderList(listEl);
-                } catch(err) { console.warn(err); }
-              }, true);
-              row.appendChild(del);
-            }
-            listEl.appendChild(row);
-          });
-        }
-        function showPanel(evt) {
-          if (evt) {
-            try { evt.preventDefault(); evt.stopPropagation(); if (evt.stopImmediatePropagation) evt.stopImmediatePropagation(); } catch(e) {}
-          }
-          lastOpenAt = Date.now();
-          removePanel();
-          refreshOriginalButtons();
-          var backdrop = css(document.createElement("div"), {
-            position:"fixed", left:"0", top:"0", right:"0", bottom:"0", zIndex:"2147483645", background:"rgba(0,0,0,.22)", pointerEvents:"auto"
-          });
-          backdrop.id = BACKDROP_ID;
-          backdrop.addEventListener("click", function(e){
-            if (Date.now() - lastOpenAt < 450) { e.preventDefault(); e.stopPropagation(); return; }
-            removePanel();
-          }, true);
-          var panel = css(document.createElement("div"), {
-            position:"fixed", top:"58px", right:"12px", width:"min(94vw, 410px)", maxHeight:"82vh", overflow:"hidden",
-            zIndex:"2147483647", background:"#0f172a", color:"#fff", border:"1px solid rgba(251,191,36,.22)",
-            borderRadius:"18px", boxShadow:"0 28px 90px rgba(0,0,0,.78)", fontFamily:"system-ui,-apple-system,sans-serif", pointerEvents:"auto"
-          });
-          panel.id = PANEL_ID;
-          panel.addEventListener("pointerdown", function(e){ e.stopPropagation(); }, true);
-          panel.addEventListener("click", function(e){ e.stopPropagation(); }, true);
-          var head = css(document.createElement("div"), {display:"flex", alignItems:"center", justifyContent:"space-between", gap:"8px", padding:"11px 12px", borderBottom:"1px solid rgba(255,255,255,.08)", background:"rgba(251,191,36,.06)"});
-          var title = css(node("div", "⚡ STRATEGY PRESETS"), {fontSize:"11px", fontWeight:"1000", color:"#fbbf24", letterSpacing:".13em"});
-          var close = css(node("button", "✕"), {background:"transparent", border:"0", color:"#cbd5e1", fontSize:"18px", cursor:"pointer", padding:"2px 6px"});
-          close.addEventListener("click", removePanel, true);
-          head.appendChild(title); head.appendChild(close); panel.appendChild(head);
-          var list = css(document.createElement("div"), {maxHeight:"calc(82vh - 126px)", overflowY:"auto", padding:"8px"});
-          panel.appendChild(list);
-          var foot = css(document.createElement("div"), {borderTop:"1px solid rgba(255,255,255,.08)", padding:"8px", display:"flex", gap:"8px", background:"rgba(0,0,0,.22)"});
-          var save = css(node("button", "+ SAVE CURRENT"), {flex:"1", padding:"10px", borderRadius:"12px", border:"1px solid rgba(251,191,36,.24)", background:"rgba(251,191,36,.10)", color:"#fcd34d", cursor:"pointer", fontSize:"10px", fontWeight:"900", letterSpacing:".1em"});
-          save.addEventListener("click", function(e){
-            e.preventDefault(); e.stopPropagation();
-            var live = api();
-            if (!live || typeof live.saveAsPreset !== "function") return alert("Preset engine is still starting.");
-            var name = prompt("Preset name:", "Soulman Preset");
-            if (name && name.trim()) {
-              try { live.saveAsPreset(name.trim()); setTimeout(function(){ renderList(list); }, 80); } catch(err) { alert("Could not save preset."); }
-            }
-          }, true);
-          var reload = css(node("button", "↻"), {width:"46px", padding:"10px", borderRadius:"12px", border:"1px solid rgba(255,255,255,.12)", background:"rgba(255,255,255,.055)", color:"#fff", cursor:"pointer", fontSize:"13px", fontWeight:"900"});
-          reload.title = "Refresh preset list";
-          reload.addEventListener("click", function(e){ e.preventDefault(); e.stopPropagation(); var live = api(); try { live && live.refreshPresets && live.refreshPresets(); } catch(err){} setTimeout(function(){ renderList(list); }, 120); }, true);
-          foot.appendChild(save); foot.appendChild(reload); panel.appendChild(foot);
-          document.body.appendChild(backdrop);
-          document.body.appendChild(panel);
-          renderList(list);
-          var tries = 0;
-          retryTimer = setInterval(function(){
-            tries++;
-            if (!document.getElementById(PANEL_ID)) { clearInterval(retryTimer); retryTimer = null; return; }
-            renderList(list);
-            if (api() && typeof api().loadPreset === "function" && tries > 2) { clearInterval(retryTimer); retryTimer = null; }
-            if (tries > 20) { clearInterval(retryTimer); retryTimer = null; }
-          }, 500);
-        }
-        function isFloatingPresetButtonEvent(e) {
-          var target = e && e.target;
-          return !!(target && target.closest && target.closest("#" + BUTTON_ID));
-        }
-        function originalPresetMenuOpen() {
-          try {
-            var nodes = document.querySelectorAll("p, div");
-            for (var i = 0; i < nodes.length; i++) {
-              var el = nodes[i];
-              if (el.closest && el.closest("#" + PANEL_ID)) continue;
-              if (el.closest && el.closest("button")) continue;
-              var txt = (el.textContent || "").replace(/\s+/g, " ").trim().toUpperCase();
-              if (txt === "STRATEGY PRESETS" && el.offsetParent !== null) return true;
-            }
-          } catch(e) {}
-          return false;
-        }
-        function scheduleFallbackPanel() {
-          setTimeout(function(){
-            if (!document.getElementById(PANEL_ID) && !originalPresetMenuOpen()) showPanel();
-          }, 140);
-        }
-        function shouldOpenFromEvent(e) {
-          var target = e.target;
-          if (!target) return false;
-          if (target.closest && target.closest("#" + PANEL_ID)) return false;
-          var btn = target.closest ? target.closest("button, [role='button'], a") : null;
-          if (!btn) return false;
-          var txt = (btn.textContent || "").replace(/\s+/g," ").trim().toUpperCase();
-          var title = (btn.getAttribute && (btn.getAttribute("title") || "").toUpperCase()) || "";
-          return txt === "PRESETS" || /(^|\s)PRESETS($|\s)/.test(txt) || title.indexOf("PRESET") >= 0 || btn.getAttribute("data-soulman-presets-fixed") === "1";
-        }
-        function openHandler(e) {
-          if (isFloatingPresetButtonEvent(e)) {
-            showPanel(e);
-            return;
-          }
-          if (!shouldOpenFromEvent(e)) return;
-          refreshOriginalButtons();
-          showPanel(e);
-          scheduleFallbackPanel();
-        }
-        ["pointerdown", "mousedown", "touchstart", "click"].forEach(function(type){
-          document.addEventListener(type, openHandler, true);
-        });
-        window.addEventListener("keydown", function(e){
-          if ((e.key || "").toLowerCase() === "p" && (e.shiftKey || e.altKey || e.ctrlKey)) showPanel(e);
-        }, true);
-        function makeFloatingButton() {
-          var existing = document.getElementById(BUTTON_ID);
-          if (existing) {
-            css(existing, {
-              position:"fixed", right:"12px", top:"10px", zIndex:"2147483647", pointerEvents:"auto",
-              border:"1px solid rgba(251,191,36,.45)", background:"linear-gradient(180deg, rgba(146,64,14,.98), rgba(92,47,8,.98))",
-              color:"#fff7ed", borderRadius:"999px", padding:"9px 13px", font:"1000 11px system-ui,-apple-system,sans-serif",
-              letterSpacing:".09em", boxShadow:"0 14px 38px rgba(0,0,0,.65)", cursor:"pointer", textTransform:"uppercase"
-            });
-            existing.disabled = false;
-            existing.style.setProperty("display", "block", "important");
-            existing.style.setProperty("visibility", "visible", "important");
-            existing.style.setProperty("opacity", "1", "important");
-            return;
-          }
-          var btn = css(node("button", "⚡ PRESETS"), {
-            position:"fixed", right:"12px", top:"10px", zIndex:"2147483647", pointerEvents:"auto",
-            border:"1px solid rgba(251,191,36,.45)", background:"linear-gradient(180deg, rgba(146,64,14,.98), rgba(92,47,8,.98))",
-            color:"#fff7ed", borderRadius:"999px", padding:"9px 13px", font:"1000 11px system-ui,-apple-system,sans-serif",
-            letterSpacing:".09em", boxShadow:"0 14px 38px rgba(0,0,0,.65)", cursor:"pointer", textTransform:"uppercase"
-          });
-          btn.id = BUTTON_ID;
-          btn.title = "Open Strategy Presets";
-          ["pointerdown", "mousedown", "touchstart", "click"].forEach(function(type){
-            btn.addEventListener(type, function(e){ showPanel(e); }, true);
-          });
-          document.body.appendChild(btn);
-          btn.disabled = false;
-          btn.style.setProperty("display", "block", "important");
-          btn.style.setProperty("visibility", "visible", "important");
-          btn.style.setProperty("opacity", "1", "important");
-        }
-        function boot() {
-          refreshOriginalButtons();
-          makeFloatingButton();
-        }
-        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-        else boot();
-        setInterval(function(){ refreshOriginalButtons(); makeFloatingButton(); }, 1000);
-        window.showSoulmanPresetPanel = showPanel;
-        window.closeSoulmanPresetPanel = removePanel;
-        window.SoulmanPresetFix = { showPanel: showPanel, getPresets: getPresets, normalizeVault: normalizeVault, readStoragePresets: readStoragePresets };
-        console.log("[Soulman Presets] hard fix loaded. Use the floating ⚡ PRESETS button or Shift+P.");
-      })();
-    </script>
-
-  
-    <script id="soulman-parent-preset-message-bridge">
-      (function(){
-        'use strict';
-        window.addEventListener('message', function(e){
-          var data = e && e.data;
-          var shouldOpen = data === 'open-soulman-presets' || !!(data && typeof data === 'object' && (data.type === 'open-soulman-presets' || data.action === 'open-soulman-presets'));
-          if (shouldOpen) {
-            try {
-              if (typeof window.showSoulmanPresetPanel === 'function') window.showSoulmanPresetPanel(e);
-              else if (window.SoulmanPresetFix && typeof window.SoulmanPresetFix.showPanel === 'function') window.SoulmanPresetFix.showPanel(e);
-            } catch(err) { console.warn('[Soulman Presets] parent bridge failed', err); }
-          }
-        }, false);
       })();
     </script>
 

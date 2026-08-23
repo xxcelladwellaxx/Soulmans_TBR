@@ -4,161 +4,11 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=3.0, user-scalable=yes, viewport-fit=cover"/>
 <title>Soulman's Test Bet Roulette</title>
+<meta name="theme-color" content="#06110f"/>
+<meta name="description" content="Soulman's Test Bet Roulette — a premium American roulette simulator."/>
 <script>
 document.documentElement.classList.add('soulman-starting');
 </script>
-<style id="soulman-desktop-auto-spin-fullscreen-style">
-  /* Desktop Auto-Spin uses the whole viewport and keeps each settings group
-     independently scrollable. This keeps the controls visible without
-     rebuilding or moving native select elements while they are open. */
-  @media (min-width:769px) and (min-height:601px){
-    body.soulman-auto-dialog-open{
-      overflow:hidden !important;
-    }
-
-    body.soulman-auto-dialog-open #autoRepeatModal{
-      inset:0 !important;
-      top:0 !important;
-      left:0 !important;
-      right:0 !important;
-      bottom:0 !important;
-      display:flex !important;
-      width:100vw !important;
-      height:100vh !important;
-      height:100dvh !important;
-      max-width:none !important;
-      max-height:none !important;
-      margin:0 !important;
-      padding:0 !important;
-      transform:none !important;
-      overflow:hidden !important;
-      align-items:stretch !important;
-      justify-content:stretch !important;
-      background:rgba(3,7,15,.96) !important;
-      pointer-events:auto !important;
-      z-index:2147483700 !important;
-    }
-
-    body.soulman-auto-dialog-open #autoModalInner{
-      position:relative !important;
-      display:flex !important;
-      flex-direction:column !important;
-      width:100vw !important;
-      height:100vh !important;
-      height:100dvh !important;
-      min-width:0 !important;
-      min-height:0 !important;
-      max-width:none !important;
-      max-height:none !important;
-      margin:0 !important;
-      padding:0 !important;
-      border:0 !important;
-      border-radius:0 !important;
-      overflow:hidden !important;
-      background:linear-gradient(145deg,#07101f 0%,#0a1324 52%,#070d19 100%) !important;
-      box-shadow:none !important;
-      backdrop-filter:none !important;
-      transition:none !important;
-    }
-
-    body.soulman-auto-dialog-open #autoDragHandle{
-      position:relative !important;
-      top:auto !important;
-      flex:0 0 52px !important;
-      min-height:52px !important;
-      padding:7px 70px !important;
-      border-radius:0 !important;
-      cursor:default !important;
-      touch-action:auto !important;
-    }
-
-    body.soulman-auto-dialog-open #autoDragHandle > span:first-child{
-      display:none !important;
-    }
-
-    body.soulman-auto-dialog-open #autoTitle{
-      margin:0 !important;
-      font-size:19px !important;
-      line-height:38px !important;
-    }
-
-    body.soulman-auto-dialog-open #autoTopCloseBtn{
-      right:14px !important;
-    }
-
-    body.soulman-auto-dialog-open #autoModalBody{
-      flex:1 1 auto !important;
-      min-width:0 !important;
-      min-height:0 !important;
-      width:100% !important;
-      max-width:none !important;
-      margin:0 !important;
-      padding:12px 14px 14px !important;
-      overflow:hidden !important;
-    }
-
-    body.soulman-auto-dialog-open #autoSetupFields:not([style*="display: none"]){
-      display:grid !important;
-      grid-template-columns:minmax(0,.9fr) minmax(0,1.25fr) minmax(0,.95fr) !important;
-      gap:12px !important;
-      width:100% !important;
-      height:100% !important;
-      min-width:0 !important;
-      min-height:0 !important;
-      margin:0 !important;
-      overflow:hidden !important;
-    }
-
-    body.soulman-auto-dialog-open #autoSetupFields > .autoSetupColumn{
-      min-width:0 !important;
-      min-height:0 !important;
-      height:100% !important;
-      padding:11px 12px 14px !important;
-      overflow-x:hidden !important;
-      overflow-y:auto !important;
-      overscroll-behavior:contain !important;
-      scrollbar-gutter:stable !important;
-      border:1px solid rgba(255,211,77,.15) !important;
-      border-radius:10px !important;
-      background:rgba(4,10,20,.62) !important;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,.035) !important;
-    }
-
-    body.soulman-auto-dialog-open #autoSetupStrategyColumn{
-      border-color:rgba(34,211,238,.18) !important;
-    }
-
-    body.soulman-auto-dialog-open #autoSetupRunColumn{
-      display:flex !important;
-      flex-direction:column !important;
-    }
-
-    body.soulman-auto-dialog-open #autoProgressionPctPanel{
-      height:228px !important;
-      min-height:228px !important;
-      max-height:228px !important;
-    }
-
-    body.soulman-auto-dialog-open #autoControlsSetup{
-      position:sticky !important;
-      bottom:-14px !important;
-      z-index:20 !important;
-      margin-top:auto !important;
-      padding:12px 0 10px !important;
-      background:linear-gradient(180deg,rgba(4,10,20,0),rgba(4,10,20,.97) 24%,#040a14 100%) !important;
-    }
-
-    body.soulman-auto-dialog-open #autoModalResizeGrip{
-      display:none !important;
-    }
-
-    body.soulman-auto-dialog-open #autoSetupFields select,
-    body.soulman-auto-dialog-open #autoSetupFields input,
-    body.soulman-auto-dialog-open #autoSetupFields button{
-      pointer-events:auto !important;
-    }
-  }
-</style>
 <!-- SOULMAN PHONE-ONLY PATCH: keep wheel taps away from browser edge navigation -->
 <style id="soulman-phone-wheel-safe-edge-style">
   @media (max-width:900px), (pointer:coarse) and (max-height:600px){
@@ -678,15 +528,13 @@ document.documentElement.classList.add('soulman-starting');
 
     body.soulman-phone-auto-settings-fullscreen #autoStrategy{
       width:100% !important;
-      height:34px !important;
-      padding:5px 6px !important;
-      font-size:10px !important;
-      line-height:1.1 !important;
+      height:38px !important;
+      font-size:12px !important;
       text-overflow:ellipsis !important;
     }
 
     body.soulman-phone-auto-settings-fullscreen #autoStrategy option{
-      font-size:10px !important;
+      font-size:12px !important;
     }
 
     body.soulman-phone-auto-settings-fullscreen #autoProgressionPctPanel{
@@ -5226,7 +5074,7 @@ document.documentElement.classList.add('soulman-starting');
     right:4px !important;
     z-index:190000 !important;
     display:grid !important;
-    grid-template-columns:var(--control-side-w) repeat(5, var(--control-main-w)) !important;
+    grid-template-columns:var(--control-side-w) repeat(4, var(--control-main-w)) !important;
     grid-template-rows:repeat(2, var(--control-row-h)) !important;
     gap:0px !important;
   }
@@ -5283,7 +5131,7 @@ document.documentElement.classList.add('soulman-starting');
     filter: brightness(1.15);
   }
   
-  /* Unit buttons positioned in the two-row desktop control grid */
+  /* Unit buttons positioned in 5x5 grid */
   .unitBtn{
     grid-row: span 1 !important;
   }
@@ -5330,84 +5178,6 @@ document.documentElement.classList.add('soulman-starting');
     min-width:var(--control-main-w) !important;
     max-width:var(--control-main-w) !important;
     box-sizing:border-box !important;
-  }
-  #desktopBetAmountTool{
-    grid-column:6 !important;
-    grid-row:1 / span 2 !important;
-    width:var(--control-main-w) !important;
-    min-width:var(--control-main-w) !important;
-    max-width:var(--control-main-w) !important;
-    height:calc(var(--control-row-h) * 2) !important;
-    min-height:calc(var(--control-row-h) * 2) !important;
-    flex-direction:column !important;
-    gap:3px !important;
-    white-space:normal !important;
-    border-right:1px solid rgba(255,215,0,0.3) !important;
-    border-radius:0 4px 4px 0 !important;
-    background:linear-gradient(180deg, rgba(13,118,107,.82), rgba(3,43,39,.9)) !important;
-    color:#fff7c2 !important;
-  }
-  #desktopBetAmountTool .desktop-amount-symbol{
-    display:flex;
-    width:25px;
-    height:25px;
-    align-items:center;
-    justify-content:center;
-    border:1px solid rgba(255,211,77,.75);
-    border-radius:6px;
-    background:rgba(0,0,0,.42);
-    color:#fff7c2;
-    font-size:17px;
-    font-weight:1000;
-    line-height:1;
-    box-shadow:inset 0 1px 2px rgba(255,255,255,.2), 0 2px 4px rgba(0,0,0,.5);
-  }
-  #desktopBetAmountTool .desktop-amount-label{
-    font-size:8px;
-    font-weight:1000;
-    line-height:1;
-    letter-spacing:.25px;
-  }
-  body.soulman-amount-armed #desktopBetAmountTool,
-  body.soulman-amount-armed #desktopBetAmountTool:hover{
-    border-color:#5eead4 !important;
-    background:linear-gradient(180deg, #18a999, #075a53) !important;
-    color:#fff !important;
-    box-shadow:inset 0 0 0 2px rgba(204,251,241,.28), 0 0 16px rgba(45,212,191,.9) !important;
-    animation:soulmanPhoneAmountPulse .95s ease-in-out infinite !important;
-  }
-  #clear,
-  #fav3{
-    border-right:none !important;
-    border-radius:0 !important;
-  }
-  body.soulman-phone-fit-enabled .fixed-controls-container{
-    grid-template-columns:var(--control-side-w) repeat(4, var(--control-main-w)) !important;
-  }
-  body.soulman-phone-fit-enabled #desktopBetAmountTool{
-    display:none !important;
-  }
-  body.soulman-phone-fit-enabled #clear{
-    border-right:1px solid rgba(255,215,0,.3) !important;
-    border-radius:0 4px 0 0 !important;
-  }
-  body.soulman-phone-fit-enabled #fav3{
-    border-right:1px solid rgba(255,215,0,.3) !important;
-    border-radius:0 0 4px 0 !important;
-  }
-  @media (pointer:coarse){
-    .fixed-controls-container{
-      grid-template-columns:var(--control-side-w) repeat(4, var(--control-main-w)) !important;
-    }
-    #desktopBetAmountTool{ display:none !important; }
-    #clear{
-      border-right:1px solid rgba(255,215,0,.3) !important;
-      border-radius:0 4px 0 0 !important;
-    }
-    #fav3{
-      border-right:1px solid rgba(255,215,0,.3) !important;
-      border-radius:0 0 4px 0 !important;
-    }
   }
 
   /* Fixed Favorite Buttons at Bottom Left */
@@ -8554,10 +8324,6 @@ body.soulman-king-reward-paused #gameTitleBlingLayer{
         <button id="fav1" class="btn favBtn" title="Click once to save, twice to double, three times to triple">Fav A</button>
         <button id="fav2" class="btn favBtn" title="Click once to save, twice to double, three times to triple">Fav B</button>
         <button id="fav3" class="btn favBtn" title="Click once to save, twice to double, three times to triple">Fav C</button>
-        <button id="desktopBetAmountTool" class="btn" type="button" aria-label="Custom bet amount and unit size" aria-pressed="false" title="Custom amount: choose a betting spot, then enter the bet amount and unit size">
-          <span class="desktop-amount-symbol" aria-hidden="true">$</span>
-          <span class="desktop-amount-label">Amount</span>
-        </button>
       </div>
 
 <!-- Auto-Repeat Modal -->
@@ -8572,8 +8338,6 @@ body.soulman-king-reward-paused #gameTitleBlingLayer{
     
     <!-- SETUP FIELDS - hidden when running -->
     <div id="autoSetupFields">
-
-      <div id="autoSetupBetsColumn" class="autoSetupColumn">
 
       <!-- Auto Fav Buttons - load/save bet layouts for auto-play -->
       <div style="margin:0 0 10px;">
@@ -8673,10 +8437,6 @@ body.soulman-king-reward-paused #gameTitleBlingLayer{
         </div>
       </div>
 
-      </div><!-- end bets and trigger column -->
-
-      <div id="autoSetupStrategyColumn" class="autoSetupColumn">
-
       <!-- Starting Bankroll for simulation -->
       <div style="margin:0 0 8px;">
         <label style="font-size:11px;color:#aab;">Starting Bankroll:</label>
@@ -8696,11 +8456,11 @@ body.soulman-king-reward-paused #gameTitleBlingLayer{
       <div style="margin:6px 0;">
         <label style="font-size:12px;color:#aab;">Strategy:</label>
         <select id="autoStrategy" style="display:block;width:100%;margin-top:4px;padding:7px 8px;font-size:13px;font-weight:700;background:#0a1020;color:#ffd34d;border:1px solid #ffd34d;border-radius:6px;outline:none;">
-          <option value="soulmans_favorite">Soulman's Favorite (+1 loss, reset at peak)</option>
           <option value="flat">Flat Bet (same amount)</option>
           <option value="martingale">Martingale (double on loss)</option>
           <option value="reverse_martingale">Reverse Martingale (double on win)</option>
           <option value="dalembert">D'Alembert (+1 unit loss, -1 unit win)</option>
+          <option value="soulmans_favorite">Soulman's Favorite (+1 loss, reset at peak)</option>
           <option value="fibonacci">Fibonacci (loss = next, win = back 2)</option>
           <option value="paroli">Paroli (double on win, reset after 3)</option>
           <option value="labouchere">Labouchere (cancellation system)</option>
@@ -8712,7 +8472,7 @@ body.soulman-king-reward-paused #gameTitleBlingLayer{
         <div id="autoProgressionPctPanel" style="margin-top:7px;padding:7px;background:rgba(95,216,255,0.055);border:1px solid rgba(95,216,255,0.20);border-radius:6px;height:178px;min-height:178px;max-height:178px;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px;">
             <div style="font-size:11px;color:#67e8f9;font-weight:900;letter-spacing:0.3px;">Progression Percentages</div>
-            <button id="autoProgressionPctRefresh" type="button" onclick="runAutoProgressionPercentages(true);" style="padding:4px 7px;font-size:10px;font-weight:900;background:#07111f;color:#67e8f9;border:1px solid #22d3ee;border-radius:5px;cursor:pointer;">UPDATE %</button>
+            <button id="autoProgressionPctRefresh" type="button" onclick="runAutoProgressionPercentages(true);" style="padding:4px 7px;font-size:10px;font-weight:900;background:#07111f;color:#67e8f9;border:1px solid #22d3ee;border-radius:5px;cursor:pointer;">REFRESH %</button>
           </div>
           <div id="autoProgressionBasePct" style="font-size:10.5px;color:#cbd5e1;line-height:1.35;min-height:30px;flex:0 0 auto;">Place bets first.</div>
           <div id="autoProgressionPctRows" style="margin-top:5px;display:grid;gap:4px;min-height:76px;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding-right:2px;overscroll-behavior:contain;"></div>
@@ -8801,10 +8561,6 @@ body.soulman-king-reward-paused #gameTitleBlingLayer{
         </div>
       </div>
 
-      </div><!-- end bankroll and strategy column -->
-
-      <div id="autoSetupRunColumn" class="autoSetupColumn">
-
       <div style="margin:6px 0;">
         <label style="font-size:11px;color:#aab;">Speed:</label>
         <div id="autoSpeedBtns" style="display:flex;gap:4px;margin-top:3px;">
@@ -8881,8 +8637,6 @@ body.soulman-king-reward-paused #gameTitleBlingLayer{
       </div>
 
       <div id="autoSummaryArea" style="display:none;margin:8px 0;padding:8px;font-size:11px;color:#8af;background:rgba(0,0,0,0.3);border-radius:6px;text-align:center;"></div>
-
-      </div><!-- end speed and run controls column -->
 
     </div>
 
@@ -17176,7 +16930,6 @@ let autoRepeatCurrentBets = null; // snapshot of actually-placed bets for this s
 let autoPeelState = null;
 let autoRepeatLastProgressAt = 0;
 let autoRepeatRecoveryActive = false;
-let autoRepeatFinishInProgress = false;
 let autoRepeatSimulationFinalBank = 0;
 let autoRepeatSimulationDisplayActive = false;
 
@@ -17329,7 +17082,6 @@ function failAutoRepeatSafely(reason, err){
     try{ spinning = false; }catch(_){}
     try{ restoreWheelAfterAutoSpin(); }catch(_){}
     try{ restoreChipTrayAfterAuto(); }catch(_){}
-    try{ if(typeof _turboRestoreAll === 'function') _turboRestoreAll(); }catch(_){}
     try{ showAutoRepeatSummary(); }catch(_){}
     try{ updateAutoChartRerunButton(); }catch(_){}
   }finally{
@@ -17892,43 +17644,29 @@ function updateAutoChartRerunButton(){
 }
 
 function finishAutoRepeatWithReason(reason){
-  if(autoRepeatFinishInProgress) return;
-  autoRepeatFinishInProgress = true;
-  const finalReason = reason || (autoRepeatRemaining <= 0 ? 'Completed all requested spins' : 'Stopped manually');
-
-  // Commit the critical idle state first. Chart, ledger, audio, or layout errors
-  // must never be able to leave Auto-Spin marked as active after it has ended.
-  try{ markAutoRepeatProgress(); }catch(_){}
-  try{ setAutoRepeatStopReason(finalReason); }catch(_){ autoRepeatStopReason = finalReason; }
-  try{ autoRepeatRunToken++; }catch(_){}
-  try{ clearAutoRepeatNextTimer(); }catch(_){}
+  markAutoRepeatProgress();
+  reconcileAutoRepeatLedger();
+  setAutoRepeatStopReason(reason);
+  autoRepeatRunToken++;
+  clearAutoRepeatNextTimer();
   autoRepeatActive = false;
   autoRepeatPaused = false;
-  try{ cancelSlowAutoWait(); }catch(_){}
+  cancelSlowAutoWait();
+  document.body.classList.remove('soulman-auto-sim-active');
+  document.body.classList.remove('spinning');
   spinning = false;
-  try{ document.body.classList.remove('soulman-auto-sim-active', 'spinning'); }catch(_){}
-
-  try{ reconcileAutoRepeatLedger(); }catch(err){ console.warn('Auto-spin final ledger reconciliation skipped:', err); }
-  try{ restoreWheelAfterAutoSpin(); }catch(_){}
-  try{ restoreChipTrayAfterAuto(); }catch(_){}
-  try{ if(typeof _turboRestoreAll === 'function') _turboRestoreAll(); }catch(_){}
-  try{
-    const topPause = document.getElementById('autoTopPauseBtn');
-    if(topPause) topPause.style.display = 'none';
-    const quickReset = document.getElementById('quickBankResetBtn');
-    if(quickReset && typeof gameMode !== 'undefined' && gameMode === 'strict') quickReset.style.display = 'none';
-    document.querySelectorAll('#rebet, #undo, #clear, #unitPlus, #unitMinus, #favSetSwitch, .favBtn, #addUnit, #subUnit, .chip')
-      .forEach(b => { b.style.opacity = ''; b.style.pointerEvents = ''; });
-  }catch(_){}
-  try{ updateAutoStatus(getAutoRepeatStopReason()); }catch(_){}
-  try{ showAutoRepeatSummary(); }
-  catch(err){
-    console.warn('Auto-spin summary recovery:', err);
-    try{ prepareAutoRepeatStoppedUi(); }catch(_){}
-  }
-  try{ updateAutoChartRerunButton(); }catch(_){}
-  try{ flushMainChartAfterAuto(); }catch(_){}
-  autoRepeatFinishInProgress = false;
+  restoreWheelAfterAutoSpin();
+  restoreChipTrayAfterAuto();
+  const topPause = document.getElementById('autoTopPauseBtn');
+  if(topPause) topPause.style.display = 'none';
+  const quickReset = document.getElementById('quickBankResetBtn');
+  if(quickReset && typeof gameMode !== 'undefined' && gameMode === 'strict') quickReset.style.display = 'none';
+  document.querySelectorAll('#rebet, #undo, #clear, #unitPlus, #unitMinus, #favSetSwitch, .favBtn, #addUnit, #subUnit, .chip')
+    .forEach(b => { b.style.opacity = ''; b.style.pointerEvents = ''; });
+  updateAutoStatus(getAutoRepeatStopReason());
+  showAutoRepeatSummary();
+  updateAutoChartRerunButton();
+  flushMainChartAfterAuto();
 }
 
 function restoreWheelAfterAutoSpin(){
@@ -18513,8 +18251,6 @@ function continueAutoRepeat(){
   }
   clearAutoRepeatNextTimer();
   clearAutoSpinBankrollPreview();
-  autoRepeatFinishInProgress = false;
-  autoRepeatRecoveryActive = false;
   markAutoRepeatProgress();
   autoRealBankRestored = false;
   captureRealGameSnapshot();
@@ -18645,9 +18381,6 @@ function applyAutoMobileLayout(){
   var modal = document.getElementById('autoRepeatModal');
   var inner = document.getElementById('autoModalInner');
   if(!modal || !inner) return;
-  // Opening a native picker can resize the phone's visual viewport.  Do not
-  // rebuild the Auto-Spin sheet while the stable phone strategy picker is up.
-  if(document.body && document.body.classList.contains('soulman-phone-strategy-picker-open')) return;
   if(isAutoMobile()){
     var runningView = document.getElementById('autoRunningView');
     var isRunning = runningView && runningView.style.display !== 'none';
@@ -18825,7 +18558,6 @@ function positionAutoModalOverFelt(){
   function onTitleDown(e){
     if(!isAutoDialogTopDragTarget(e)) return;
     if(document.body && document.body.classList.contains('soulman-phone-auto-settings-fullscreen')) return;
-    if(document.body && document.body.classList.contains('soulman-auto-dialog-open') && !isAutoMobile()) return;
     modal = document.getElementById('autoRepeatModal');
     if(!modal) return;
     // On mobile the modal is typically auto-positioned with bottom/transform/width — clear
@@ -19232,8 +18964,6 @@ function startAutoRepeat(){
   if(count < 1) return;
   clearAutoRepeatNextTimer();
   clearAutoSpinBankrollPreview();
-  autoRepeatFinishInProgress = false;
-  autoRepeatRecoveryActive = false;
   markAutoRepeatProgress();
   autoRealBankRestored = false;
   captureRealGameSnapshot();
@@ -19486,6 +19216,7 @@ function pauseAutoRepeat(){
 
 function stopAutoRepeat(){
   markAutoRepeatProgress();
+  reconcileAutoRepeatLedger();
   try{ if(typeof stopSoulmanWheelSound === 'function') stopSoulmanWheelSound(120); }catch(e){}
   if(!autoRepeatStopReason) setAutoRepeatStopReason('Stopped manually');
   autoRepeatRunToken++;
@@ -19494,7 +19225,6 @@ function stopAutoRepeat(){
   document.body.classList.remove('soulman-auto-sim-active');
   autoRepeatPaused = false;
   cancelSlowAutoWait();
-  try{ reconcileAutoRepeatLedger(); }catch(err){ console.warn('Auto-spin stop ledger reconciliation skipped:', err); }
   // Force-unlock spinning and re-enable all bet buttons
   spinning = false;
   document.body.classList.remove('spinning');
@@ -19902,7 +19632,6 @@ function startSlowAutoWait() {
       clearInterval(slowAutoCountdownInterval);
       return;
     }
-    markAutoRepeatProgress();
     slowAutoCountdown--;
     if(slowAutoCountdown <= 0) {
       clearInterval(slowAutoCountdownInterval);
@@ -19962,9 +19691,6 @@ function doSlowAutoSpin() {
   
   // Use the real spinGame (full wheel animation)
   spinGame();
-  if(autoRepeatActive && !spinning){
-    failAutoRepeatSafely('Stopped - auto-spin recovered because the wheel could not start');
-  }
 }
 
 function cancelSlowAutoWait() {
@@ -21191,11 +20917,11 @@ function avgAutoMc(list, key){
 }
 
 const AUTO_PROGRESSION_PREVIEW_STRATEGIES = [
-  {value:'soulmans_favorite', label:"Soulman's Favorite"},
   {value:'flat', label:'Flat Bet'},
   {value:'martingale', label:'Martingale'},
   {value:'reverse_martingale', label:'Reverse Martingale'},
   {value:'dalembert', label:"D'Alembert"},
+  {value:'soulmans_favorite', label:"Soulman's Favorite"},
   {value:'fibonacci', label:'Fibonacci'},
   {value:'paroli', label:'Paroli'},
   {value:'labouchere', label:'Labouchere'},
@@ -21230,20 +20956,8 @@ function resetAutoProgressionOptionLabels(){
   const sel = autoProgressionSelect();
   if(!sel) return;
   Array.from(sel.options).forEach(function(opt){
-    const baseText = autoProgressionBaseOptionText(opt);
-    if(opt.textContent !== baseText) opt.textContent = baseText;
+    opt.textContent = autoProgressionBaseOptionText(opt);
   });
-}
-
-function autoProgressionPhoneManualRefreshOnly(){
-  const touch = (('ontouchstart' in window) || Number(navigator.maxTouchPoints) > 0);
-  if(!touch) return false;
-  if(document.body?.classList.contains('soulman-phone-fit-enabled')) return true;
-  try{
-    return !!window.matchMedia?.('(max-width:900px), (pointer:coarse) and (max-height:600px)').matches;
-  }catch(_){
-    return Math.min(window.innerWidth || 9999, window.innerHeight || 9999) <= 900;
-  }
 }
 
 function autoProgressionStrategyLabel(value){
@@ -21374,7 +21088,7 @@ function runAutoProgressionPercentages(force){
   const rawBets = getAutoMcSourceBets();
   if(!rawBets || rawBets.length === 0){
     autoProgressionPreviewToken++;
-    if(refreshBtn){ refreshBtn.disabled = false; refreshBtn.textContent = 'UPDATE %'; refreshBtn.style.opacity = '1'; }
+    if(refreshBtn){ refreshBtn.disabled = false; refreshBtn.textContent = 'REFRESH %'; refreshBtn.style.opacity = '1'; }
     resetAutoProgressionOptionLabels();
     baseEl.textContent = 'Place bets first.';
     rowsEl.innerHTML = '';
@@ -21386,7 +21100,7 @@ function runAutoProgressionPercentages(force){
   const baseBets = sanitizeAutoMcBets(rawBets, settings.isStrictAuto);
   if(!baseBets.length){
     autoProgressionPreviewToken++;
-    if(refreshBtn){ refreshBtn.disabled = false; refreshBtn.textContent = 'UPDATE %'; refreshBtn.style.opacity = '1'; }
+    if(refreshBtn){ refreshBtn.disabled = false; refreshBtn.textContent = 'REFRESH %'; refreshBtn.style.opacity = '1'; }
     resetAutoProgressionOptionLabels();
     baseEl.textContent = 'No legal starting bets under current limits.';
     rowsEl.innerHTML = '';
@@ -21403,10 +21117,9 @@ function runAutoProgressionPercentages(force){
     ' | Avg/spin ' + autoMcSignedMoneyFine(baseProfile.expectedNet) +
     ' | Edge ' + autoMcPct(baseProfile.edgePct);
 
-  const phoneManualMode = autoProgressionPhoneManualRefreshOnly();
-  const previewRuns = Math.max(10, Math.min(phoneManualMode ? 80 : 260, settings.runs || 250));
-  const previewCount = Math.max(1, Math.min(phoneManualMode ? 600 : 1500, settings.count || 500));
-  const previewWasCapped = previewCount !== settings.count || previewRuns !== settings.runs;
+  const previewRuns = Math.max(10, Math.min(260, settings.runs || 250));
+  const previewCount = Math.max(1, Math.min(1500, settings.count || 500));
+  const countWasCapped = previewCount !== settings.count;
   const token = ++autoProgressionPreviewToken;
   const rows = [];
   let strategyIdx = 0;
@@ -21432,7 +21145,7 @@ function runAutoProgressionPercentages(force){
 
   function step(){
     if(token !== autoProgressionPreviewToken) return;
-    const deadline = performance.now() + (phoneManualMode ? 6 : 18);
+    const deadline = performance.now() + 18;
     while(strategyIdx < AUTO_PROGRESSION_PREVIEW_STRATEGIES.length && performance.now() < deadline){
       const strategy = AUTO_PROGRESSION_PREVIEW_STRATEGIES[strategyIdx];
       const strategySettings = Object.assign({}, settings, {
@@ -21455,12 +21168,12 @@ function runAutoProgressionPercentages(force){
     } else {
       // Commit the completed table once. Incremental row/option rewrites made
       // the phone strategy menu visibly jump while the preview was running.
-      renderAutoProgressionRows(rows, settings, previewRuns, previewCount, previewWasCapped);
+      renderAutoProgressionRows(rows, settings, previewRuns, previewCount, countWasCapped);
       const elapsed = ((performance.now() - t0) / 1000).toFixed(2);
       if(noteEl){
         noteEl.textContent = (noteEl.textContent || '') + ' Calculated in ' + elapsed + 's.';
       }
-      if(refreshBtn){ refreshBtn.disabled = false; refreshBtn.textContent = 'UPDATE %'; refreshBtn.style.opacity = '1'; }
+      if(refreshBtn){ refreshBtn.disabled = false; refreshBtn.textContent = 'REFRESH %'; refreshBtn.style.opacity = '1'; }
     }
   }
 
@@ -21469,12 +21182,9 @@ function runAutoProgressionPercentages(force){
 
 function scheduleAutoProgressionPercentages(delay){
   if(autoProgressionPreviewTimer) clearTimeout(autoProgressionPreviewTimer);
-  autoProgressionPreviewTimer = null;
-  autoProgressionPreviewToken++;
-  const refreshBtn = document.getElementById('autoProgressionPctRefresh');
-  const noteEl = document.getElementById('autoProgressionPctNote');
-  if(refreshBtn){ refreshBtn.disabled = false; refreshBtn.textContent = 'UPDATE %'; refreshBtn.style.opacity = '1'; }
-  if(noteEl) noteEl.textContent = 'Settings changed. Select UPDATE % when you want to recalculate; automatic updates are off so menus stay open.';
+  autoProgressionPreviewTimer = setTimeout(function(){
+    runAutoProgressionPercentages(false);
+  }, Math.max(50, Number(delay) || 180));
 }
 
 function bindAutoProgressionPercentages(){
@@ -21769,17 +21479,11 @@ const _spinCheck = setInterval(() => {
     if(_lastSpinStart === 0) _lastSpinStart = Date.now();
     else if(Date.now() - _lastSpinStart > 15000) {
       console.warn('Global failsafe: spinning stuck for 15s, force-unlocking');
-      const stalledAutoSpin = !!autoRepeatActive;
       spinning = false;
       _lastSpinStart = 0;
       const betBtns = document.querySelectorAll('#rebet, #undo, #clear, #unitPlus, #unitMinus, #favSetSwitch, .favBtn, #addUnit, #subUnit, .chip');
       betBtns.forEach(b => { b.style.opacity = ''; b.style.pointerEvents = ''; });
       try { if(fixedWheelScaleWrapper) fixedWheelScaleWrapper.classList.remove('spinning'); } catch(e) {}
-      if(stalledAutoSpin){
-        failAutoRepeatSafely(autoRepeatRemaining <= 0
-          ? 'Stopped - auto-spin recovered from a stalled final spin'
-          : 'Stopped - auto-spin recovered from a stalled wheel spin');
-      }
     }
   } else {
     _lastSpinStart = 0;
@@ -21794,41 +21498,17 @@ setInterval(function(){
       autoRepeatLastProgressAt = 0;
       return;
     }
-    if(autoRepeatPaused){
+    if(autoRepeatPaused || slowAutoWaiting || spinning || autoRepeatNextTimer){
       _autoRepeatWatchdogMisses = 0;
       return;
     }
     if(!autoRepeatLastProgressAt) markAutoRepeatProgress();
-    const idleFor = Date.now() - autoRepeatLastProgressAt;
-
-    // The final resolved spin should close the run immediately. This catches a
-    // lost continuation callback without waiting for the general idle timeout.
-    if(autoRepeatRemaining <= 0 && !spinning && !slowAutoWaiting){
-      finishAutoRepeatWithReason('Completed all requested spins');
-      _autoRepeatWatchdogMisses = 0;
-      return;
-    }
-
-    // Waiting and timer states are legitimate only while they keep reporting
-    // progress. Previously they were ignored forever, which allowed a stale
-    // timeout or failed phone wheel callback to strand Auto-Spin permanently.
-    let allowedIdle = 9000;
-    if(slowAutoWaiting) allowedIdle = 12000;
-    else if(spinning) allowedIdle = (autoSpeed === 1 ? 15000 : 7000);
-    else if(autoRepeatNextTimer) allowedIdle = 6000;
-
-    if(idleFor > allowedIdle){
+    if(Date.now() - autoRepeatLastProgressAt > 9000){
       _autoRepeatWatchdogMisses++;
       if(_autoRepeatWatchdogMisses >= 2){
         const reason = autoRepeatRemaining <= 0
-          ? 'Stopped - auto-spin recovered while ending the final spin'
-          : (spinning
-            ? 'Stopped - auto-spin recovered from a stalled wheel spin'
-            : (slowAutoWaiting
-              ? 'Stopped - auto-spin recovered from a stalled slow-spin wait'
-              : (autoRepeatNextTimer
-                ? 'Stopped - auto-spin recovered from a stalled next-spin timer'
-                : 'Stopped - auto-spin recovered from an idle simulation')));
+          ? 'Completed all requested spins'
+          : 'Stopped - auto-spin recovered from an idle simulation';
         failAutoRepeatSafely(reason);
       }
     } else {
@@ -25525,10 +25205,6 @@ function enableRealSimRightControls(){
   const controls = document.querySelectorAll('#unitPlus, #unitMinus, #favSetSwitch, #fav1, #fav2, #fav3, #rebet, #undo, #clear, .fixed-controls-container .btn');
   controls.forEach(el => {
     if(!el) return;
-    if(el.id === 'desktopBetAmountTool' && (
-      document.body.classList.contains('soulman-phone-fit-enabled') ||
-      (window.matchMedia && window.matchMedia('(pointer:coarse)').matches)
-    )) return;
     el.classList.remove('disabled');
     el.removeAttribute('disabled');
     el.removeAttribute('hidden');
@@ -31146,261 +30822,6 @@ window.addEventListener('resize', positionToolbar);
   } else { init(); }
 })();
 </script>
-<style id="soulman-phone-strategy-picker-style">
-  #soulmanPhoneStrategyPicker{
-    display:none;
-  }
-
-  @media (max-width:900px), (pointer:coarse) and (max-height:600px){
-    body.soulman-phone-strategy-picker-open{
-      overflow:hidden !important;
-    }
-
-    #soulmanPhoneStrategyPicker{
-      position:fixed;
-      inset:0;
-      z-index:2147483647;
-      align-items:center;
-      justify-content:center;
-      padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));
-      box-sizing:border-box;
-      background:rgba(1,5,14,.76);
-      -webkit-backdrop-filter:blur(3px);
-      backdrop-filter:blur(3px);
-      overscroll-behavior:none;
-      touch-action:none;
-    }
-
-    #soulmanPhoneStrategyPicker[data-open="1"]{
-      display:flex;
-    }
-
-    #soulmanPhoneStrategyPicker .soulman-phone-strategy-panel{
-      display:flex;
-      flex-direction:column;
-      width:min(94vw,430px);
-      max-height:min(84dvh,610px);
-      overflow:hidden;
-      box-sizing:border-box;
-      color:#fff;
-      background:rgba(8,15,30,.98);
-      border:1px solid rgba(255,211,77,.72);
-      border-radius:12px;
-      box-shadow:0 18px 48px rgba(0,0,0,.72);
-    }
-
-    #soulmanPhoneStrategyPicker .soulman-phone-strategy-head{
-      display:flex;
-      flex:0 0 auto;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      min-height:42px;
-      padding:6px 7px 6px 12px;
-      box-sizing:border-box;
-      color:#ffd34d;
-      background:rgba(32,23,4,.98);
-      border-bottom:1px solid rgba(255,211,77,.28);
-      font-size:12px;
-      font-weight:900;
-    }
-
-    #soulmanPhoneStrategyPicker .soulman-phone-strategy-close{
-      flex:0 0 36px;
-      width:36px;
-      height:36px;
-      padding:0;
-      color:#ffd7d7;
-      background:rgba(90,15,20,.62);
-      border:1px solid rgba(255,120,120,.7);
-      border-radius:50%;
-      font-size:15px;
-      font-weight:900;
-      line-height:1;
-      touch-action:manipulation;
-    }
-
-    #soulmanPhoneStrategyPicker .soulman-phone-strategy-list{
-      flex:1 1 auto;
-      min-height:0;
-      padding:6px;
-      overflow-x:hidden;
-      overflow-y:auto;
-      overscroll-behavior:contain;
-      -webkit-overflow-scrolling:touch;
-      touch-action:pan-y;
-    }
-
-    #soulmanPhoneStrategyPicker .soulman-phone-strategy-option{
-      display:block;
-      width:100%;
-      min-height:39px;
-      margin:0 0 4px;
-      padding:7px 9px;
-      box-sizing:border-box;
-      color:#dbe7ff;
-      background:rgba(18,30,53,.82);
-      border:1px solid rgba(130,160,205,.24);
-      border-radius:7px;
-      font-size:10px;
-      font-weight:800;
-      line-height:1.2;
-      text-align:left;
-      touch-action:manipulation;
-    }
-
-    #soulmanPhoneStrategyPicker .soulman-phone-strategy-option:last-child{
-      margin-bottom:0;
-    }
-
-    #soulmanPhoneStrategyPicker .soulman-phone-strategy-option[aria-selected="true"]{
-      color:#111827;
-      background:#ffd34d;
-      border-color:#fff0a5;
-      box-shadow:0 0 0 1px rgba(255,211,77,.34);
-    }
-  }
-</style>
-<script id="soulman-phone-strategy-picker-script">
-(function(){
-  if(window.__soulmanPhoneStrategyPickerInstalled) return;
-  window.__soulmanPhoneStrategyPickerInstalled = true;
-
-  var picker = null;
-  var select = null;
-  var ignoreClickUntil = 0;
-
-  function phoneApplies(){
-    if(!document.body) return false;
-    if(document.body.classList.contains('soulman-phone-fit-enabled')) return true;
-    try{
-      return !!(window.matchMedia && window.matchMedia('(max-width:900px) and (pointer:coarse)').matches);
-    }catch(_){ return false; }
-  }
-
-  function isOpen(){
-    return !!(picker && picker.dataset.open === '1');
-  }
-
-  function stop(ev){
-    if(!ev) return;
-    try{ if(ev.cancelable !== false) ev.preventDefault(); }catch(_){}
-    try{ ev.stopPropagation(); }catch(_){}
-    try{ if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); }catch(_){}
-  }
-
-  function closePicker(){
-    if(!picker) return;
-    picker.dataset.open = '0';
-    picker.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('soulman-phone-strategy-picker-open');
-    ignoreClickUntil = Date.now() + 450;
-    if(typeof window.applyAutoMobileLayout === 'function'){
-      requestAnimationFrame(function(){
-        try{ window.applyAutoMobileLayout(); }catch(_){}
-      });
-    }
-  }
-
-  function choose(value){
-    if(!select) return;
-    if(select.value !== value){
-      select.value = value;
-      select.dispatchEvent(new Event('change', {bubbles:true}));
-    }
-    closePicker();
-  }
-
-  function renderOptions(){
-    if(!picker || !select) return;
-    var list = picker.querySelector('.soulman-phone-strategy-list');
-    if(!list) return;
-    list.textContent = '';
-    Array.prototype.forEach.call(select.options, function(option){
-      var button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'soulman-phone-strategy-option';
-      button.textContent = option.textContent;
-      button.dataset.value = option.value;
-      button.setAttribute('role', 'option');
-      button.setAttribute('aria-selected', option.value === select.value ? 'true' : 'false');
-      button.addEventListener('click', function(ev){
-        stop(ev);
-        choose(button.dataset.value);
-      });
-      list.appendChild(button);
-    });
-  }
-
-  function openPicker(ev){
-    if(!phoneApplies()) return false;
-    stop(ev);
-    if(isOpen()) return true;
-    renderOptions();
-    document.body.classList.add('soulman-phone-strategy-picker-open');
-    picker.dataset.open = '1';
-    picker.setAttribute('aria-hidden', 'false');
-    var selected = picker.querySelector('[aria-selected="true"]');
-    if(selected){
-      requestAnimationFrame(function(){
-        try{ selected.scrollIntoView({block:'center'}); }catch(_){}
-      });
-    }
-    return true;
-  }
-
-  function build(){
-    select = document.getElementById('autoStrategy');
-    if(!select || select.dataset.phoneStablePicker === '1') return;
-    select.dataset.phoneStablePicker = '1';
-    select.setAttribute('aria-haspopup', 'listbox');
-
-    picker = document.createElement('div');
-    picker.id = 'soulmanPhoneStrategyPicker';
-    picker.dataset.open = '0';
-    picker.setAttribute('aria-hidden', 'true');
-    picker.innerHTML = '<div class="soulman-phone-strategy-panel" role="dialog" aria-modal="true" aria-label="Choose Auto-Spin strategy">' +
-      '<div class="soulman-phone-strategy-head"><span>Choose Strategy</span><button type="button" class="soulman-phone-strategy-close" aria-label="Close strategy list">&#10005;</button></div>' +
-      '<div class="soulman-phone-strategy-list" role="listbox"></div>' +
-      '</div>';
-    document.body.appendChild(picker);
-
-    picker.querySelector('.soulman-phone-strategy-close').addEventListener('click', function(ev){
-      stop(ev);
-      closePicker();
-    });
-    picker.querySelector('.soulman-phone-strategy-panel').addEventListener('click', function(ev){
-      try{ ev.stopPropagation(); }catch(_){}
-    });
-    picker.addEventListener('touchmove', function(ev){
-      var list = ev.target && ev.target.closest ? ev.target.closest('.soulman-phone-strategy-list') : null;
-      if(!list) stop(ev);
-      else try{ ev.stopPropagation(); }catch(_){}
-    }, {passive:false});
-
-    var downEvent = window.PointerEvent ? 'pointerdown' : 'touchstart';
-    select.addEventListener(downEvent, function(ev){ openPicker(ev); }, {passive:false});
-    select.addEventListener('click', function(ev){
-      if(!phoneApplies()) return;
-      stop(ev);
-      if(Date.now() >= ignoreClickUntil) openPicker();
-    });
-    select.addEventListener('keydown', function(ev){
-      if(phoneApplies() && (ev.key === 'Enter' || ev.key === ' ')) openPicker(ev);
-    });
-    document.addEventListener('keydown', function(ev){
-      if(isOpen() && ev.key === 'Escape'){
-        stop(ev);
-        closePicker();
-      }
-    }, true);
-  }
-
-  window.closeSoulmanPhoneStrategyPicker = closePicker;
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build, {once:true});
-  else build();
-})();
-</script>
 
 <!-- lazy-init: wait for splash/welcome to finish before wiring wheel + retract -->
 <script>
@@ -31496,7 +30917,11 @@ window.addEventListener('resize', positionToolbar);
 
     const topChild = (el)=>{ let n=el; while(n && n.parentNode && n.parentNode!==svg) n=n.parentNode; return n||el; };
     const moved = new Set();
-    spinParts.forEach(el=>{ const t=topChild(el); if(!moved.has(t)){ rotor.appendChild(t); moved.add(t);} });
+    spinParts.forEach(el=>{
+      const t=topChild(el);
+      if(!t || t===svg || t===rotor || (t.contains && t.contains(rotor))) return;
+      if(!moved.has(t)){ rotor.appendChild(t); moved.add(t); }
+    });
 
     // Clean transforms on children; lock statics
     rotor.querySelectorAll('*').forEach(el=>{ el.style && (el.style.transform=''); if(el!==rotor) el.removeAttribute && el.removeAttribute('transform'); });
@@ -31592,12 +31017,16 @@ window.addEventListener('resize', positionToolbar);
 
     // Future definitions
     CANDS.forEach((n)=>{
+      const descriptor = Object.getOwnPropertyDescriptor(window, n);
+      if(descriptor && descriptor.configurable === false) return;
       let val = window[n];
-      Object.defineProperty(window, n, {
-        configurable:true, enumerable:true,
-        get(){ return val; },
-        set(v){ val = v; if(typeof val==='function') wrap(n); }
-      });
+      try{
+        Object.defineProperty(window, n, {
+          configurable:true, enumerable:true,
+          get(){ return val; },
+          set(v){ val = v; if(typeof val==='function') wrap(n); }
+        });
+      }catch(_){ return; }
       if(typeof val==='function'){ const t=val; val=undefined; window[n]=t; } // trigger setter
     });
 
@@ -40094,7 +39523,7 @@ body.soulman-splash-active #soulmanHandDollarExhaustLayer{
 })();
 </script>
 
-<!-- SOULMAN PHONE/DESKTOP PATCH: place a custom amount and remember its unit size -->
+<!-- SOULMAN PHONE-ONLY PATCH: place a custom amount and remember its unit size -->
 <script id="soulman-phone-bet-amount-tool-script">
 (function(){
   if(window.__soulmanPhoneBetAmountTool) return;
@@ -40106,8 +39535,14 @@ body.soulman-splash-active #soulmanHandDollarExhaustLayer{
   var lastUnit = null;
 
   function btn(){ return document.getElementById('phoneBetAmountTool'); }
-  function desktopBtn(){ return document.getElementById('desktopBetAmountTool'); }
-  function allButtons(){ return [btn(), desktopBtn()].filter(Boolean); }
+
+  function phoneOnlyApplies(){
+    try {
+      if(document.body && document.body.classList.contains('soulman-phone-fit-enabled')) return true;
+      if(window.matchMedia && window.matchMedia('(max-width: 900px), (pointer: coarse) and (max-height: 600px)').matches) return true;
+    } catch(_) {}
+    return /Mobile|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Android.*Mobile/i.test(navigator.userAgent || '');
+  }
 
   function stopEvent(ev){
     if(!ev) return;
@@ -40148,22 +39583,20 @@ body.soulman-splash-active #soulmanHandDollarExhaustLayer{
   }
 
   function setArmed(on){
-    armed = !!on;
+    armed = !!(on && phoneOnlyApplies());
     if(armed && typeof window.__soulmanSetPhoneEraserArmed === 'function'){
       window.__soulmanSetPhoneEraserArmed(false);
     }
     window.__soulmanPhoneBetAmountArmed = armed;
-    allButtons().forEach(function(b){
+    var b = btn();
+    if(b){
       b.classList.toggle('active', armed);
       b.setAttribute('aria-pressed', armed ? 'true' : 'false');
-    });
-    if(document.body){
-      document.body.classList.toggle('soulman-phone-amount-armed', armed);
-      document.body.classList.toggle('soulman-amount-armed', armed);
     }
+    if(document.body) document.body.classList.toggle('soulman-phone-amount-armed', armed);
     if(armed){
       clearActiveChipVisual();
-      showBanner('Amount tool ready - choose a betting spot', 'draw', 1700);
+      showBanner('Amount tool ready - tap a betting spot', 'draw', 1700);
     } else {
       restoreActiveChipVisual();
     }
@@ -40177,10 +39610,7 @@ body.soulman-splash-active #soulmanHandDollarExhaustLayer{
     var style = document.createElement('style');
     style.id = 'phoneBetAmountPlacerStyle';
     style.textContent = [
-      /* Keep this dialog below the custom watch-hand cursor. The native mouse
-         is intentionally hidden on desktop, so sharing its top z-index made
-         the dialog cover the only visible pointer. */
-      '#phoneBetAmountPlacer{position:fixed;inset:0;z-index:2147483600;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(1,8,8,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-sizing:border-box}',
+      '#phoneBetAmountPlacer{position:fixed;inset:0;z-index:2147483647;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(1,8,8,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-sizing:border-box}',
       '#phoneBetAmountPlacer.show{display:flex}',
       '#phoneBetAmountPlacer .pbap-card{width:min(380px,94vw);max-height:calc(100dvh - 24px);overflow:auto;border:2px solid #d4af37;border-radius:17px;background:linear-gradient(155deg,#102b27 0%,#071713 58%,#0b1322 100%);color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.84),0 0 25px rgba(212,175,55,.25)}',
       '#phoneBetAmountPlacer .pbap-head{padding:13px 16px;background:linear-gradient(90deg,#0d766b,#109282 52%,#075a53);border-bottom:1px solid rgba(255,215,0,.55);text-align:center;color:#fff7c2;font-size:15px;font-weight:1000;letter-spacing:.07em;text-transform:uppercase;text-shadow:0 2px 3px #000}',
@@ -40343,7 +39773,7 @@ body.soulman-splash-active #soulmanHandDollarExhaustLayer{
   }
 
   window.__soulmanOpenPhoneAmountBetDialog = function(spec){
-    if(!armed || !spec) return false;
+    if(!armed || !phoneOnlyApplies() || !spec) return false;
     var overlay = ensureDialog();
     if(overlay.classList.contains('show')) return true;
     var nums = spec.nums instanceof Set ? Array.from(spec.nums) : Array.from(spec.nums || []);
@@ -40385,17 +39815,16 @@ body.soulman-splash-active #soulmanHandDollarExhaustLayer{
   }
 
   function init(){
-    var buttons = allButtons();
-    if(!buttons.length) return;
-    buttons.forEach(function(b){
-      b.setAttribute('aria-pressed', 'false');
-      b.addEventListener('click', toggleButton, {passive:false});
-      b.addEventListener('touchstart', function(ev){ ev.stopPropagation(); }, {passive:false});
-      b.addEventListener('pointerdown', function(ev){ ev.stopPropagation(); }, {passive:false});
-      b.addEventListener('mousedown', function(ev){ ev.stopPropagation(); }, {passive:false});
-    });
+    var b = btn();
+    if(!b) return;
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', toggleButton, {passive:false});
+    b.addEventListener('touchstart', function(ev){ ev.stopPropagation(); }, {passive:false});
+    b.addEventListener('pointerdown', function(ev){ ev.stopPropagation(); }, {passive:false});
+    b.addEventListener('mousedown', function(ev){ ev.stopPropagation(); }, {passive:false});
     document.addEventListener('pointerdown', handleChipSelect, true);
     document.addEventListener('touchstart', handleChipSelect, {capture:true, passive:true});
+    window.addEventListener('resize', function(){ if(armed && !phoneOnlyApplies()) setArmed(false); });
   }
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
@@ -45863,3 +45292,7 @@ setInterval(schedulePatternUpdate,900);
   setTimeout(wire, 1400);
 })();
 </script>
+<link rel="stylesheet" href="index2-overhaul.css"/>
+<script src="index2-overhaul.js"></script>
+</body>
+</html>

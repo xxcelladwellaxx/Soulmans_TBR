@@ -1,0 +1,14 @@
+# Installed dependencies
+node_modules/
+
+# Local launchers and operating-system metadata
+*.lnk
+Thumbs.db
+.DS_Store
+
+# Local development server output
+server*.err
+server*.out
+
+# Generated artwork and print exports kept outside the roulette project
+output/

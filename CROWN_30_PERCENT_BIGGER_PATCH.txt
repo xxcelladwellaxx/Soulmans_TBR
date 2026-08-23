@@ -1,0 +1,38 @@
+
+CROWN 30% BIGGER PATCH
+======================
+
+Replace ALL occurrences of:
+
+scale(0.38)
+
+WITH:
+
+scale(0.50)
+
+
+Then replace:
+
+const LAND_Y = headY - 92;
+
+WITH:
+
+const LAND_Y = headY - 118;
+
+
+Then replace:
+
+const LAND_X = headX - 8;
+
+WITH:
+
+const LAND_X = headX - 2;
+
+
+This makes the crown:
+- 30% bigger
+- higher up
+- more centered
+- still crooked
+- still feather floating
+- still above the head layer
