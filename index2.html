@@ -1393,6 +1393,8 @@ document.documentElement.classList.add('soulman-starting');
       startY: t.clientY,
       panX: panX,
       panY: panY,
+      scrollY: window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0,
+      gesture: null,
       moved: false,
       startedOnBetSpot: startedOnBetSpot
     };
@@ -1415,16 +1417,37 @@ document.documentElement.classList.add('soulman-starting');
       var t = ev.touches[0];
       var dx = t.clientX - boardPan.startX;
       var dy = t.clientY - boardPan.startY;
-      if(!boardPan.moved && Math.hypot(dx, dy) < 3) return;
+      if(!boardPan.moved && Math.hypot(dx, dy) < 8) return;
+
+      if(!boardPan.gesture){
+        var root = document.documentElement;
+        var body = document.body || root;
+        var maxPageScroll = Math.max(0, Math.max(root.scrollHeight, body.scrollHeight) - window.innerHeight);
+        var verticalSwipe = Math.abs(dy) > Math.abs(dx) * 1.18;
+        var canFollowPage = maxPageScroll > 2 && verticalSwipe && (dy < 0 || boardPan.scrollY > 0);
+        boardPan.gesture = canFollowPage ? 'page' : 'table';
+      }
+
       boardPan.moved = true;
-      panX = boardPan.panX + dx;
-      panY = boardPan.panY + dy;
       if(boardPan.startedOnBetSpot){
         try{ window._touchIsOnBet = false; }catch(_){}
         try{ if(typeof currentHoverBet !== 'undefined') currentHoverBet = null; }catch(_){}
         try{ if(typeof longPressTimer !== 'undefined' && longPressTimer){ clearTimeout(longPressTimer); longPressTimer = null; } }catch(_){}
         try{ if(typeof longPressTimer3s !== 'undefined' && longPressTimer3s){ clearTimeout(longPressTimer3s); longPressTimer3s = null; } }catch(_){}
       }
+
+      if(boardPan.gesture === 'page'){
+        var pageRoot = document.documentElement;
+        var pageBody = document.body || pageRoot;
+        var pageMax = Math.max(0, Math.max(pageRoot.scrollHeight, pageBody.scrollHeight) - window.innerHeight);
+        window.scrollTo(0, clamp(boardPan.scrollY - dy, 0, pageMax));
+        document.body.classList.add('soulman-phone-page-scrolling');
+        claim(ev);
+        return;
+      }
+
+      panX = boardPan.panX + dx;
+      panY = boardPan.panY + dy;
       markManualView();
       applyView();
       document.body.classList.add('soulman-phone-look-panning');
@@ -1436,7 +1459,7 @@ document.documentElement.classList.add('soulman-starting');
     if(boardPan && boardPan.moved) suppressClickUntil = Date.now() + 180;
     boardPan = null;
     pinch = null;
-    if(document.body) document.body.classList.remove('soulman-phone-look-panning');
+    if(document.body) document.body.classList.remove('soulman-phone-look-panning', 'soulman-phone-page-scrolling');
   }
 
   window.addEventListener('touchend', finishTouch, {capture:true, passive:true});
@@ -7907,7 +7930,7 @@ body.soulman-king-reward-paused #gameTitleBlingLayer{
       </div>
       
 
-      <div style="position:relative; margin:0; padding:0; margin-top:80px; overflow:visible !important;">
+      <div id="gameStage" style="position:relative; margin:0; padding:0; margin-top:80px; overflow:visible !important;">
         <!-- Settings Button -->
         <button class="settings-button" id="settingsButton" title="Settings: Configure game options, bankroll, table limits, and audio settings">Settings</button>
         <button id="autoRepeatBtn" onclick="openAutoRepeat();" title="Auto-repeat current bets for multiple spins" style="position:fixed;top:12px;left:120px;z-index:9999;padding:6px 14px;font-size:14px;font-weight:900;background:linear-gradient(135deg,#1a6b1a,#0d4d0d);color:#4f4;border:1px solid #4f4;border-radius:8px;cursor:pointer;">⚡ Auto</button>
@@ -42542,7 +42565,6 @@ body.soulman-splash-active #soulmanHandDollarExhaustLayer{
       if(typeof positionRail === 'function') requestAnimationFrame(function(){ positionRail(); });
     }catch(_){}
 
-    try{ window.scrollTo(0, 0); }catch(_){}
   }
 
   function scheduleFit(){
@@ -45294,5 +45316,181 @@ setInterval(schedulePatternUpdate,900);
 </script>
 <link rel="stylesheet" href="index2-overhaul.css"/>
 <script src="index2-overhaul.js"></script>
+<style id="soulman-phone-single-page-style">
+  @media (max-width:900px), (pointer:coarse) and (max-height:600px){
+    html.soulman-phone-fit-root,
+    html.soulman-phone-fit-root body,
+    body.soulman-phone-fit-enabled{
+      height:auto !important;
+      min-height:100dvh !important;
+      overflow-x:hidden !important;
+      overflow-y:auto !important;
+      overscroll-behavior-y:auto !important;
+      touch-action:pan-y !important;
+      -webkit-overflow-scrolling:touch !important;
+    }
+
+    body.soulman-phone-fit-enabled #wrap,
+    body.soulman-phone-fit-enabled #card{
+      position:relative !important;
+      height:100dvh !important;
+      min-height:100dvh !important;
+      max-height:none !important;
+    }
+
+    body.soulman-phone-fit-enabled #gameStage{
+      position:static !important;
+      width:100% !important;
+      height:100% !important;
+      margin:0 !important;
+      padding:0 !important;
+    }
+
+    body.soulman-phone-fit-enabled #feltBlurWrap{
+      position:absolute !important;
+      left:0 !important;
+      top:0 !important;
+    }
+
+    body.soulman-phone-fit-enabled #wrap .fixed-wheel-scale-wrapper,
+    body.soulman-phone-fit-enabled #wrap .fixed-heat-container,
+    body.soulman-phone-fit-enabled #wrap .fixed-chips-container,
+    body.soulman-phone-fit-enabled #wrap .fixed-controls-container,
+    body.soulman-phone-fit-enabled #wrap .unified-status-panel,
+    body.soulman-phone-fit-enabled #settingsButton,
+    body.soulman-phone-fit-enabled #autoRepeatBtn,
+    body.soulman-phone-fit-enabled #autoTopPauseBtn{
+      position:absolute !important;
+    }
+
+    body.soulman-phone-fit-enabled #statsSection{
+      position:relative !important;
+      display:block !important;
+      width:100% !important;
+      min-height:calc(100dvh - env(safe-area-inset-bottom)) !important;
+      margin:0 !important;
+      padding:12px 8px calc(24px + env(safe-area-inset-bottom)) !important;
+      box-sizing:border-box !important;
+      overflow:visible !important;
+      visibility:visible !important;
+      opacity:1 !important;
+      pointer-events:auto !important;
+      touch-action:pan-y !important;
+      -webkit-overflow-scrolling:touch !important;
+      background:linear-gradient(180deg,rgba(5,15,15,.98),#020808) !important;
+      scroll-margin-top:0;
+    }
+
+    body.soulman-phone-fit-enabled #statsSection .chartInline,
+    body.soulman-phone-fit-enabled #statsSection .chartPanel,
+    body.soulman-phone-fit-enabled #statsSection #chart,
+    body.soulman-phone-fit-enabled #statsSection #inspect,
+    body.soulman-phone-fit-enabled #statsSection #chartSpinButtons{
+      max-width:100% !important;
+      box-sizing:border-box !important;
+      pointer-events:auto !important;
+      touch-action:pan-y !important;
+    }
+
+    body.soulman-phone-stats-view #soulmanOuterRopePattern,
+    body.soulman-phone-stats-view #mobileBetModeToggle,
+    body.soulman-phone-stats-view #soulmanChipAdjustToggle,
+    body.soulman-phone-stats-view #soulmanToolsButton,
+    body.soulman-phone-stats-view #soulmanPhoneZoomControls{
+      visibility:hidden !important;
+      opacity:0 !important;
+      pointer-events:none !important;
+    }
+  }
+</style>
+<script id="soulman-phone-single-page-script">
+(function(){
+  if(window.__soulmanPhoneSinglePage) return;
+  window.__soulmanPhoneSinglePage = true;
+
+  var redrawFrame = 0;
+
+  function phoneApplies(){
+    return !!(document.body && document.body.classList.contains('soulman-phone-fit-enabled'));
+  }
+
+  function gameIsVisible(wrap){
+    if(!wrap) return false;
+    var style = getComputedStyle(wrap);
+    return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) > .03;
+  }
+
+  function placeStatsOnPage(){
+    if(!phoneApplies()) return;
+    var wrap = document.getElementById('wrap');
+    var stats = document.getElementById('statsSection');
+    if(!wrap || !stats) return;
+
+    if(stats.parentNode !== wrap.parentNode){
+      wrap.parentNode.insertBefore(stats, wrap.nextSibling);
+    }
+
+    if(gameIsVisible(wrap)){
+      stats.style.setProperty('display','block','important');
+      stats.style.setProperty('visibility','visible','important');
+      stats.style.setProperty('opacity','1','important');
+      stats.style.setProperty('pointer-events','auto','important');
+      stats.setAttribute('aria-label','Game history graph and statistics');
+
+      if(!redrawFrame){
+        redrawFrame = requestAnimationFrame(function(){
+          redrawFrame = 0;
+          try{ if(typeof window.drawChart === 'function') window.drawChart(); }catch(_){}
+        });
+      }
+    }
+  }
+
+  function syncScrollState(){
+    if(!document.body) return;
+    document.body.classList.toggle('soulman-phone-stats-view', phoneApplies() && (window.scrollY || 0) > 4);
+  }
+
+  var previousPrepare = window.soulmanPreparePhoneGameView;
+  window.soulmanPreparePhoneGameView = function(){
+    var result;
+    if(typeof previousPrepare === 'function') result = previousPrepare.apply(this, arguments);
+    placeStatsOnPage();
+    setTimeout(placeStatsOnPage, 0);
+    setTimeout(placeStatsOnPage, 160);
+    return result;
+  };
+
+  window.soulmanPlacePhoneStatsOnPage = placeStatsOnPage;
+  window.addEventListener('scroll', syncScrollState, {passive:true});
+  window.addEventListener('resize', function(){
+    placeStatsOnPage();
+    syncScrollState();
+  }, {passive:true});
+  window.addEventListener('orientationchange', function(){
+    setTimeout(placeStatsOnPage, 160);
+  }, {passive:true});
+
+  if(document.body && typeof MutationObserver === 'function'){
+    new MutationObserver(function(){
+      placeStatsOnPage();
+      syncScrollState();
+    }).observe(document.body, {attributes:true, attributeFilter:['class']});
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      placeStatsOnPage();
+      syncScrollState();
+    }, {once:true});
+  }else{
+    placeStatsOnPage();
+    syncScrollState();
+  }
+
+  window.addEventListener('load', placeStatsOnPage, {once:true});
+  setTimeout(placeStatsOnPage, 500);
+})();
+</script>
 </body>
 </html>
